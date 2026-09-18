@@ -33,7 +33,7 @@ Create or reuse these resources in `ap-southeast-1`:
 - GitHub Actions OIDC provider for `https://token.actions.githubusercontent.com`, audience `sts.amazonaws.com`.
 - IAM role `GitHubActionsNewApiDeploy`.
 - IAM policy allowing ECR image push operations for the `new-api` repository, EKS cluster description, and `sts:GetCallerIdentity`.
-- EKS access entry for the role with namespace-scoped Kubernetes access to the `new-api` namespace. The deployment workflow still uses the AWS EKS token flow; it does not store a long-lived Kubernetes token.
+- EKS access entry for the role with namespace-scoped Kubernetes access to the `new-api` namespace. The `new-api` Namespace is provisioned once by an administrator because namespace-scoped access cannot create cluster-scoped Namespace objects. The deployment workflow still uses the AWS EKS token flow; it does not store a long-lived Kubernetes token.
 
 The IAM trust policy is restricted to the `thecybersailor/new-api` repository and the `production` GitHub environment subject. The workflow must use the `production` environment so the subject claim is stable and can be protected by GitHub environment rules.
 
@@ -63,8 +63,8 @@ Add `.github/workflows/deploy-aws.yml`:
 - Triggers on pushes to `main` and manual dispatch.
 - Runs on the existing `thecybersailor-linux-amd64` runner label.
 - Uses workflow permissions `contents: read` and `id-token: write`.
-- Checks out the repository, resolves the image tag from `${{ github.sha }}`, configures AWS credentials through `aws-actions/configure-aws-credentials`, logs into ECR, and builds/pushes the Docker image.
-- Installs `kubectl`, updates a temporary kubeconfig for `syngy-lancelot`, creates/updates the Kubernetes Secret from GitHub environment secrets, applies the manifests, waits for rollout, and performs an HTTP health check through the Service once an external address exists.
+- Checks out the repository, resolves the image tag from `${{ github.sha }}`, configures AWS credentials through `aws-actions/configure-aws-credentials`, logs into ECR, and builds/pushes the Docker image. Because the ECR repository uses immutable tags, only the commit SHA tag is pushed.
+- Installs `kubectl`, updates a temporary kubeconfig for `syngy-lancelot`, creates/updates the Kubernetes Secret from GitHub environment secrets, applies the namespace-scoped manifests, waits for rollout, and performs an HTTP health check through the Service once an external address exists.
 - Uses a concurrency group so only one production deployment runs at a time.
 - Pins third-party actions to commit SHAs, following the repository's existing workflow convention.
 

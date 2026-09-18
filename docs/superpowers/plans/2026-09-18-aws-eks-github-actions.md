@@ -24,6 +24,7 @@
 - Do not modify the existing GitHub Runner Scale Set.
 - Do not create RDS, ElastiCache, custom DNS, ACM certificates, or HTTPS Ingress in this change.
 - Use immutable image tags based on `${{ github.sha }}`.
+- The `new-api` Namespace is created once by an administrator; the namespace-scoped deployment role does not manage the Namespace object.
 - Pin third-party GitHub Actions to commit SHAs, matching existing repository conventions.
 
 ---
@@ -444,7 +445,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: new-api
-          image: new-api:latest
+          image: new-api:bootstrap
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -518,7 +519,6 @@ Create `deploy/k8s/kustomization.yaml`:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - namespace.yaml
   - serviceaccount.yaml
   - configmap.yaml
   - pvc.yaml
@@ -527,7 +527,7 @@ resources:
 images:
   - name: new-api
     newName: 712090706271.dkr.ecr.ap-southeast-1.amazonaws.com/new-api
-    newTag: latest
+    newTag: bootstrap
 ```
 
 - [ ] **Step 8: Render and validate the manifests**
@@ -539,7 +539,7 @@ kubectl kustomize deploy/k8s > /tmp/new-api-rendered.yaml
 kubectl apply --dry-run=client -f /tmp/new-api-rendered.yaml
 ```
 
-Expected: rendering succeeds, and the output contains exactly one Namespace, ServiceAccount, ConfigMap, PVC, Deployment, and LoadBalancer Service. `secret.example.yaml` must not appear in the render.
+Expected: rendering succeeds, and the output contains exactly one ServiceAccount, ConfigMap, PVC, Deployment, and LoadBalancer Service. `namespace.yaml` is provisioned separately and `secret.example.yaml` must not appear in the render.
 
 ---
 
@@ -597,7 +597,7 @@ The job must:
 - configure AWS credentials with `role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}`;
 - log into the regional ECR registry;
 - build `.` with the repository `Dockerfile`;
-- push `${ECR_REGISTRY}/new-api:${GITHUB_SHA}` and `${ECR_REGISTRY}/new-api:main`;
+- push `${ECR_REGISTRY}/new-api:${GITHUB_SHA}` only because the ECR repository uses immutable tags;
 - expose the immutable image URI through `$GITHUB_OUTPUT`.
 
 - [ ] **Step 4: Add the Kubernetes deployment steps**
@@ -606,7 +606,6 @@ The same job must:
 
 - install `kubectl`;
 - run `aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER"`;
-- create the `new-api` namespace with `kubectl apply -f deploy/k8s/namespace.yaml`;
 - create or replace the Kubernetes Secret from GitHub environment secrets using `kubectl create secret generic ... --dry-run=client -o yaml | kubectl apply -f -`;
 - apply `kubectl apply -k deploy/k8s`;
 - set the Deployment image to the immutable image URI;
@@ -707,6 +706,7 @@ aws eks update-kubeconfig \
   --name syngy-lancelot \
   --profile default \
   --kubeconfig /tmp/sg.aws.kubeconfig
+KUBECONFIG=/tmp/sg.aws.kubeconfig kubectl apply -f deploy/k8s/namespace.yaml
 KUBECONFIG=/tmp/sg.aws.kubeconfig kubectl apply -k deploy/k8s
 ```
 
@@ -838,4 +838,3 @@ Include:
 ```bash
 kubectl -n new-api rollout undo deployment/new-api
 ```
-
