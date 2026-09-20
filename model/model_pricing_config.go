@@ -277,6 +277,8 @@ func GetModelPricingSnapshot(names []string) (*ModelPricingSnapshot, error) {
 			if plugin, ok := generation.Get(target.PluginKey); ok {
 				entry.UsageSchema, _ = plugin.Meta.UsageForModel(target.Declared)
 			}
+		} else {
+			entry.UsageSchema = billing_setting.GetBuiltinBillingUsageSchema(name)
 		}
 		plugins := generation.PluginsByModel(name)
 		configuredVariants, _ := configured[billing_setting.PluginBillingExprOption].(map[string]any)
@@ -432,6 +434,8 @@ func validateModelPricing(name string, values, previous PricingValues) error {
 				} else {
 					err = billing_setting.SmokeTestExpr(expression)
 				}
+			} else if schema := billing_setting.GetBuiltinBillingUsageSchema(name); len(schema) > 0 {
+				err = billing_setting.SmokeTestTaskExpr(expression, schema)
 			} else if previous[key] != expression || len(billingexpr.UsedUsageKeys(expression)) == 0 {
 				err = billing_setting.SmokeTestExpr(expression)
 			}

@@ -53,7 +53,7 @@ func GetBillingMode(model string) string {
 	if mode, ok := billingSetting.BillingMode[model]; ok {
 		return mode
 	}
-	if _, ok := builtinBillingExpr[model]; ok {
+	if _, ok := builtinBillingExpr[builtinBillingModelKey(model)]; ok {
 		// Existing administrator-configured legacy prices take precedence over
 		// a newly introduced built-in expression unless a mode was explicit.
 		if ratio_setting.HasConfiguredModelRatio(model) {
@@ -72,15 +72,19 @@ func GetBillingExpr(model string) (string, bool) {
 		return expr, true
 	}
 	if GetBillingMode(model) == BillingModeTieredExpr {
-		expr, ok := builtinBillingExpr[model]
+		expr, ok := builtinBillingExpr[builtinBillingModelKey(model)]
 		return expr, ok
 	}
 	return "", false
 }
 
 func GetBuiltinBillingExpr(model string) (string, bool) {
-	expression, ok := builtinBillingExpr[model]
+	expression, ok := builtinBillingExpr[builtinBillingModelKey(model)]
 	return expression, ok
+}
+
+func GetBuiltinBillingUsageSchema(model string) map[string]jsplugin.UsageFieldSchema {
+	return jsplugin.CloneUsageSchema(builtinBillingUsageSchema[builtinBillingModelKey(model)])
 }
 
 func PluginBillingExprKey(pluginKey, model string) string {

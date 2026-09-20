@@ -30,6 +30,26 @@ export function parseTaskResult() { return {}; }
 `, version, usageSchema)
 }
 
+func TestValidateModelPricingMinimaxH3SupportsSecondsUsage(t *testing.T) {
+	resetPricingEndpointTestTables(t)
+	require.NoError(t, DB.AutoMigrate(&Option{}))
+	const expression = `tier("per_second", u("seconds") * 0.1195)`
+
+	require.NoError(t, ValidateModelPricing("minimax/h3", PricingValues{
+		"billing_setting.billing_mode": "tiered_expr",
+		"billing_setting.billing_expr": expression,
+	}))
+	require.ErrorContains(t, ValidateModelPricing("minimax/h3", PricingValues{
+		"billing_setting.billing_mode": "tiered_expr",
+		"billing_setting.billing_expr": `tier("invalid", u("minutes") * 0.1195)`,
+	}), `usage key "minutes" is not declared`)
+
+	snapshot, err := GetModelPricingSnapshot([]string{"minimax/h3"})
+	require.NoError(t, err)
+	require.Len(t, snapshot.Entries, 1)
+	assert.Equal(t, "second", snapshot.Entries[0].UsageSchema["seconds"].Unit)
+}
+
 func TestPricingCarriesTaskUsageSchemaAndRefreshesWithPluginGeneration(t *testing.T) {
 	resetPricingEndpointTestTables(t)
 	const pluginKey = "pricing-usage-probe"

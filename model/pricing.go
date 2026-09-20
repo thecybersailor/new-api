@@ -396,6 +396,8 @@ func updatePricing() {
 			usageSchema, usageExamples := plugin.Meta.UsageForModel(usageModel)
 			pricing.BillingUsageSchema = jsplugin.CloneUsageSchema(usageSchema)
 			pricing.BillingUsageExamples = jsplugin.CloneUsageExamples(usageExamples)
+		} else {
+			pricing.BillingUsageSchema = billing_setting.GetBuiltinBillingUsageSchema(model)
 		}
 		providers := pluginGeneration.PluginsByModel(model)
 		hasProviderOverride := false

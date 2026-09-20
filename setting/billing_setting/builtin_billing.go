@@ -1,11 +1,13 @@
 package billing_setting
 
+import "github.com/QuantumNous/new-api/pkg/jsplugin"
+
 // Built-in token prices use actual USD per million tokens. Keep new model
 // defaults here instead of splitting them across the legacy ratio tables.
 var builtinBillingExpr = map[string]string{
 	// MiniMax-H3 task pricing: $0.1195 per generated video second,
 	// converted from CNY 0.8 at the configured exchange rate.
-	"MiniMax-H3": `tier("per_second", u("seconds") * 0.1195)`,
+	"minimax/h3": `tier("per_second", u("seconds") * 0.1195)`,
 	// https://developers.openai.com/api/docs/pricing (Standard, 2026-09-09).
 	// The Images API reports image output in output_tokens, normalized to c.
 	"gpt-image-2":            `tier("standard", p * 5 + cr * 1.25 + img * 8 + img_cr * 2 + c * 30)`,
@@ -16,4 +18,28 @@ var builtinBillingExpr = map[string]string{
 	// Do not infer service-tier discounts from incoming request parameters:
 	// channels filter service_tier by default, so it may not reach the upstream.
 	"gpt-6-astra": `len <= 272000 ? tier("standard", p * 10 + c * 50 + cr * 1 + cc * 12.5) : tier("long_context", p * 20 + c * 75 + cr * 2 + cc * 25)`,
+}
+
+var builtinBillingModelAliases = map[string]string{
+	"MiniMax-H3": "minimax/h3",
+}
+
+var builtinBillingUsageSchema = map[string]map[string]jsplugin.UsageFieldSchema{
+	"minimax/h3": {
+		"seconds": {
+			Type:        "number",
+			Unit:        "second",
+			Description: jsplugin.LocalizedText{"en": "Video generation unit price", "zh": "视频生成单价"},
+		},
+	},
+}
+
+func builtinBillingModelKey(model string) string {
+	if _, ok := builtinBillingExpr[model]; ok {
+		return model
+	}
+	if alias, ok := builtinBillingModelAliases[model]; ok {
+		return alias
+	}
+	return model
 }
