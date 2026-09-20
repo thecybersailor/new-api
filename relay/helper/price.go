@@ -110,6 +110,13 @@ func ModelPriceHelper(c *gin.Context, info *relaycommon.RelayInfo, promptTokens 
 		var matchName string
 		modelRatio, success, matchName = ratio_setting.GetModelRatio(billingModelName)
 		if !success {
+			if _, taskBilling := billing_setting.GetBuiltinTaskBillingExprForModel(billingModelName); taskBilling {
+				return hosttypes.PriceData{}, fmt.Errorf(
+					"模型 %s 使用视频按秒计费，必须通过任务插件路由调用（/v1/videos 或 /v1/video/generations）；"+
+						"Model %s uses video usage billing and requires a task plugin route (/v1/videos or /v1/video/generations).",
+					billingModelName, billingModelName,
+				)
+			}
 			acceptUnsetRatio := false
 			if info.UserSetting.AcceptUnsetRatioModel {
 				acceptUnsetRatio = true

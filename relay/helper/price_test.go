@@ -99,6 +99,34 @@ func TestModelPriceHelperRejectsTaskUsageExpression(t *testing.T) {
 	assert.ErrorContains(t, err, "task usage billing requires a task plugin route")
 }
 
+func TestModelPriceHelperExplainsBuiltinH3RequiresTaskRoute(t *testing.T) {
+	saved := map[string]string{}
+	require.NoError(t, config.GlobalConfig.SaveToDB(func(key, value string) error {
+		saved[key] = value
+		return nil
+	}))
+	t.Cleanup(func() {
+		require.NoError(t, config.GlobalConfig.LoadFromDB(saved))
+	})
+
+	require.NoError(t, config.GlobalConfig.LoadFromDB(map[string]string{
+		"billing_setting.billing_mode": "{}",
+		"billing_setting.billing_expr": "{}",
+	}))
+
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/chat/completions", nil)
+	info := &relaycommon.RelayInfo{
+		OriginModelName: "minimax/h3",
+		UserGroup:       "default",
+		UsingGroup:      "default",
+	}
+
+	_, err := ModelPriceHelper(ctx, info, 1000, &types.TokenCountMeta{})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "task plugin route")
+}
+
 func TestFixedPricePreConsumeAndRealtimeRejection(t *testing.T) {
 	saved := map[string]string{}
 	require.NoError(t, config.GlobalConfig.SaveToDB(func(key, value string) error {
