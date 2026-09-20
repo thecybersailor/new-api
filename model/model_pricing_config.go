@@ -181,7 +181,9 @@ func effectiveModelPricing(values map[string]map[string]any, name string) Pricin
 	if mode == "" {
 		_, hasPrice := result["ModelPrice"]
 		_, hasRatio := result["ModelRatio"]
-		if _, builtin := billing_setting.GetBuiltinBillingExpr(name); builtin && !hasPrice && !hasRatio {
+		_, builtinToken := billing_setting.GetBuiltinBillingExpr(name)
+		_, builtinTask := billing_setting.GetBuiltinTaskBillingExprForModel(name)
+		if (builtinToken || builtinTask) && !hasPrice && !hasRatio {
 			mode = "tiered_expr"
 		}
 	}
@@ -189,6 +191,8 @@ func effectiveModelPricing(values map[string]map[string]any, name string) Pricin
 		result["billing_setting.billing_mode"] = mode
 		if _, exists := result["billing_setting.billing_expr"]; !exists {
 			if expression, ok := billing_setting.GetBuiltinBillingExpr(name); ok {
+				result["billing_setting.billing_expr"] = expression
+			} else if expression, ok := billing_setting.GetBuiltinTaskBillingExprForModel(name); ok {
 				result["billing_setting.billing_expr"] = expression
 			}
 		}
@@ -258,6 +262,9 @@ func GetModelPricingSnapshot(names []string) (*ModelPricingSnapshot, error) {
 		for name := range billing_setting.GetBuiltinBillingExprCopy() {
 			nameSet[name] = true
 		}
+		for name := range billing_setting.GetBuiltinTaskBillingExprModelCopy() {
+			nameSet[name] = true
+		}
 		for name := range nameSet {
 			names = append(names, name)
 		}
@@ -325,6 +332,18 @@ func GetModelPricingSnapshot(names []string) (*ModelPricingSnapshot, error) {
 	// Preserve the existing settings editor's full-map interface. Built-in
 	// expressions are display defaults only; per-model writes do not persist them.
 	for name, expression := range billing_setting.GetBuiltinBillingExprCopy() {
+		effective := effectiveModelPricing(values, name)
+		if effective["billing_setting.billing_mode"] != "tiered_expr" {
+			continue
+		}
+		if _, ok := values["billing_setting.billing_mode"][name]; !ok {
+			values["billing_setting.billing_mode"][name] = "tiered_expr"
+		}
+		if _, ok := values["billing_setting.billing_expr"][name]; !ok {
+			values["billing_setting.billing_expr"][name] = expression
+		}
+	}
+	for name, expression := range billing_setting.GetBuiltinTaskBillingExprModelCopy() {
 		effective := effectiveModelPricing(values, name)
 		if effective["billing_setting.billing_mode"] != "tiered_expr" {
 			continue
@@ -454,7 +473,9 @@ func validateModelPricing(name string, values, previous PricingValues) error {
 	}
 	if values["billing_setting.billing_mode"] == "tiered_expr" {
 		if _, exists := values["billing_setting.billing_expr"]; !exists {
-			if _, builtin := billing_setting.GetBuiltinBillingExpr(name); !builtin {
+			_, builtinToken := billing_setting.GetBuiltinBillingExpr(name)
+			_, builtinTask := billing_setting.GetBuiltinTaskBillingExprForModel(name)
+			if !builtinToken && !builtinTask {
 				return errors.New("billing expression is required")
 			}
 		}
