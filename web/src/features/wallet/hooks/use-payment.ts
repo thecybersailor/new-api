@@ -24,15 +24,18 @@ import { handleServerError } from '@/lib/handle-server-error'
 
 import {
   calculateAmount,
+  calculateAccountAmount,
   calculateStripeAmount,
   calculateWaffoAmount,
   calculateWaffoPancakeAmount,
   requestPayment,
+  requestAccountPayment,
   requestStripePayment,
   isApiSuccess,
 } from '../api'
 import {
   isStripePayment,
+  isAccountPayment,
   isWaffoPayment,
   isWaffoPancakePayment,
   submitPaymentForm,
@@ -47,6 +50,7 @@ type AmountCalculator = (request: AmountRequest) => Promise<AmountResponse>
 
 export interface PaymentAmountCalculators {
   regular: AmountCalculator
+  account: AmountCalculator
   stripe: AmountCalculator
   waffo: AmountCalculator
   waffoPancake: AmountCalculator
@@ -54,6 +58,7 @@ export interface PaymentAmountCalculators {
 
 const defaultPaymentAmountCalculators: PaymentAmountCalculators = {
   regular: calculateAmount,
+  account: calculateAccountAmount,
   stripe: calculateStripeAmount,
   waffo: calculateWaffoAmount,
   waffoPancake: calculateWaffoPancakeAmount,
@@ -67,6 +72,8 @@ export async function requestPaymentAmount(
   let calculator = calculators.regular
   if (isStripePayment(paymentType)) {
     calculator = calculators.stripe
+  } else if (isAccountPayment(paymentType)) {
+    calculator = calculators.account
   } else if (isWaffoPayment(paymentType)) {
     calculator = calculators.waffo
   } else if (isWaffoPancakePayment(paymentType)) {
@@ -114,17 +121,26 @@ export function usePayment() {
         setProcessing(true)
 
         const isStripe = isStripePayment(paymentType)
+        const isAccount = isAccountPayment(paymentType)
         const amount = Math.floor(topupAmount)
 
-        const response = isStripe
-          ? await requestStripePayment({
-              amount,
-              payment_method: 'stripe',
-            })
-          : await requestPayment({
-              amount,
-              payment_method: paymentType,
-            })
+        let response
+        if (isStripe) {
+          response = await requestStripePayment({
+            amount,
+            payment_method: 'stripe',
+          })
+        } else if (isAccount) {
+          response = await requestAccountPayment({
+            amount,
+            payment_method: 'account',
+          })
+        } else {
+          response = await requestPayment({
+            amount,
+            payment_method: paymentType,
+          })
+        }
 
         if (!isApiSuccess(response)) {
           handleServerError(response, i18next.t('Payment request failed'))
@@ -132,14 +148,26 @@ export function usePayment() {
         }
 
         // Handle Stripe payment
-        if (isStripe && response.data?.pay_link) {
-          window.open(response.data.pay_link as string, '_blank')
-          toast.success(i18next.t('Redirecting to payment page...'))
-          return true
+        if (isStripe) {
+          const data = response.data as { pay_link?: string } | undefined
+          if (data?.pay_link) {
+            window.open(data.pay_link, '_blank')
+            toast.success(i18next.t('Redirecting to payment page...'))
+            return true
+          }
+        }
+
+        if (isAccount) {
+          const data = response.data as { checkout_url?: string } | undefined
+          if (data?.checkout_url) {
+            window.open(data.checkout_url, '_blank')
+            toast.success(i18next.t('Redirecting to payment page...'))
+            return true
+          }
         }
 
         // Handle non-Stripe payment
-        if (!isStripe && response.data) {
+        if (!isStripe && !isAccount && response.data) {
           const url = (response as unknown as { url?: string }).url
           if (url) {
             submitPaymentForm(url, response.data)

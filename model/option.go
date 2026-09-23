@@ -125,6 +125,17 @@ func InitOptionMap() {
 	common.OptionMap["WaffoPancakeMinTopUp"] = strconv.Itoa(setting.WaffoPancakeMinTopUp)
 	common.OptionMap["WaffoPancakeStoreID"] = setting.WaffoPancakeStoreID
 	common.OptionMap["WaffoPancakeProductID"] = setting.WaffoPancakeProductID
+	common.OptionMap["AccountPaymentBaseURL"] = setting.AccountPaymentBaseURL
+	common.OptionMap["AccountPaymentProjectKey"] = setting.AccountPaymentProjectKey
+	common.OptionMap["AccountPaymentEnvironment"] = setting.AccountPaymentEnvironment
+	common.OptionMap["AccountPaymentKeyID"] = setting.AccountPaymentKeyID
+	common.OptionMap["AccountPaymentServiceSecret"] = setting.AccountPaymentServiceSecret
+	common.OptionMap["AccountPaymentDefinitionVersion"] = setting.AccountPaymentDefinitionVersion
+	common.OptionMap["AccountPaymentItemRef"] = setting.AccountPaymentItemRef
+	common.OptionMap["AccountPaymentDescription"] = setting.AccountPaymentDescription
+	common.OptionMap["AccountPaymentCurrency"] = setting.AccountPaymentCurrency
+	common.OptionMap["AccountPaymentSnapshot"] = setting.AccountPaymentSnapshot
+	common.OptionMap["AccountPaymentMinTopUp"] = strconv.Itoa(setting.AccountPaymentMinTopUp)
 	common.OptionMap["TopupGroupRatio"] = common.TopupGroupRatio2JSONString()
 	common.OptionMap["Chats"] = setting.Chats2JsonString()
 	common.OptionMap["AutoGroups"] = setting.AutoGroups2JsonString()
@@ -567,6 +578,28 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.WaffoPancakeUnitPrice, _ = strconv.ParseFloat(value, 64)
 	case "WaffoPancakeMinTopUp":
 		setting.WaffoPancakeMinTopUp, _ = strconv.Atoi(value)
+	case "AccountPaymentBaseURL":
+		setting.AccountPaymentBaseURL = value
+	case "AccountPaymentProjectKey":
+		setting.AccountPaymentProjectKey = value
+	case "AccountPaymentEnvironment":
+		setting.AccountPaymentEnvironment = value
+	case "AccountPaymentKeyID":
+		setting.AccountPaymentKeyID = value
+	case "AccountPaymentServiceSecret":
+		setting.AccountPaymentServiceSecret = value
+	case "AccountPaymentDefinitionVersion":
+		setting.AccountPaymentDefinitionVersion = value
+	case "AccountPaymentItemRef":
+		setting.AccountPaymentItemRef = value
+	case "AccountPaymentDescription":
+		setting.AccountPaymentDescription = value
+	case "AccountPaymentCurrency":
+		setting.AccountPaymentCurrency = value
+	case "AccountPaymentSnapshot":
+		setting.AccountPaymentSnapshot = value
+	case "AccountPaymentMinTopUp":
+		setting.AccountPaymentMinTopUp, _ = strconv.Atoi(value)
 	case "TopupGroupRatio":
 		err = common.UpdateTopupGroupRatioByJSONString(value)
 	case "GitHubClientId":

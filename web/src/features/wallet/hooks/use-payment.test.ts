@@ -29,6 +29,10 @@ describe('payment amount routing', () => {
         calls.push('regular')
         return { success: true, data: '1' }
       },
+      account: async () => {
+        calls.push('account')
+        return { success: true, data: '3' }
+      },
       stripe: async () => {
         calls.push('stripe')
         return { success: true, data: '2' }
@@ -45,5 +49,34 @@ describe('payment amount routing', () => {
 
     expect(amount).toBe(18.75)
     expect(calls).toEqual(['waffo:120'])
+  })
+
+  test('uses the dedicated Account amount calculator', async () => {
+    const calls: string[] = []
+    const amount = await requestPaymentAmount(80, PAYMENT_TYPES.ACCOUNT, {
+      regular: async () => {
+        calls.push('regular')
+        return { success: true, data: '1' }
+      },
+      account: async (request) => {
+        calls.push(`account:${request.amount}`)
+        return { success: true, data: '9.50' }
+      },
+      stripe: async () => {
+        calls.push('stripe')
+        return { success: true, data: '2' }
+      },
+      waffo: async () => {
+        calls.push('waffo')
+        return { success: true, data: '3' }
+      },
+      waffoPancake: async () => {
+        calls.push('pancake')
+        return { success: true, data: '4' }
+      },
+    })
+
+    expect(amount).toBe(9.5)
+    expect(calls).toEqual(['account:80'])
   })
 })

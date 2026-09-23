@@ -76,6 +76,13 @@ export function isStripePayment(paymentType: string): boolean {
 }
 
 /**
+ * Check if payment method is Account
+ */
+export function isAccountPayment(paymentType: string): boolean {
+  return paymentType === PAYMENT_TYPES.ACCOUNT
+}
+
+/**
  * Check if payment method is Waffo
  */
 export function isWaffoPayment(paymentType: string): boolean {
@@ -95,6 +102,7 @@ export function isWaffoPancakePayment(paymentType: string): boolean {
 
 export interface PaymentProcessors {
   regular: (topupAmount: number, paymentType: string) => Promise<boolean>
+  account: (topupAmount: number) => Promise<boolean>
   waffo: (topupAmount: number, payMethodIndex: number) => Promise<boolean>
   waffoPancake: (topupAmount: number) => Promise<boolean>
 }
@@ -110,6 +118,10 @@ export async function dispatchSelectedPayment(
       return false
     }
     return processors.waffo(topupAmount, waffoMethodIndex)
+  }
+
+  if (isAccountPayment(paymentMethod.type)) {
+    return processors.account(topupAmount)
   }
 
   if (isWaffoPancakePayment(paymentMethod.type)) {
@@ -134,6 +146,10 @@ export function getDefaultPaymentType(topupInfo: TopupInfo | null): string {
 
   if (topupInfo.enable_stripe_topup) {
     return PAYMENT_TYPES.STRIPE
+  }
+
+  if (topupInfo.enable_account_topup) {
+    return PAYMENT_TYPES.ACCOUNT
   }
 
   if (topupInfo.enable_waffo_topup) {
@@ -161,6 +177,10 @@ export function getMinTopupAmount(topupInfo: TopupInfo | null): number {
 
   if (topupInfo.enable_stripe_topup) {
     return topupInfo.stripe_min_topup
+  }
+
+  if (topupInfo.enable_account_topup) {
+    return topupInfo.account_min_topup || DEFAULT_MIN_TOPUP
   }
 
   if (topupInfo.enable_waffo_topup) {

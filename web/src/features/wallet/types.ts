@@ -39,6 +39,7 @@ export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
   url?: string
 }
 export type StripePaymentResponse = ApiResponse<{ pay_link: string }>
+export type AccountPaymentResponse = ApiResponse<{ checkout_url: string }>
 export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
 export type CreemPaymentResponse = ApiResponse<{ checkout_url: string }>
@@ -138,6 +139,10 @@ export interface TopupInfo {
   topup_link?: string
   /** Whether Creem topup is enabled */
   enable_creem_topup?: boolean
+  /** Whether Account topup is enabled */
+  enable_account_topup?: boolean
+  /** Minimum topup amount for Account */
+  account_min_topup?: number
   /** Available Creem products */
   creem_products?: CreemProduct[]
   /** Whether Waffo topup is enabled */

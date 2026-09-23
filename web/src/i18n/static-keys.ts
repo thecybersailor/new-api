@@ -807,6 +807,7 @@ export const STATIC_I18N_KEYS = [
   'Password authentication is disabled.',
   'This external account is already bound.',
   'This email address is already in use.',
+  'Account',
   'Account password change',
   'Account binding request',
   'Account binding',

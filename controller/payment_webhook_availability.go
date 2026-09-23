@@ -92,6 +92,24 @@ func isWaffoPancakeWebhookEnabled() bool {
 	return isWaffoPancakeTopUpEnabled()
 }
 
+func isAccountTopUpEnabled() bool {
+	if !isPaymentComplianceConfirmed() {
+		return false
+	}
+	return strings.TrimSpace(setting.AccountPaymentBaseURL) != "" &&
+		strings.TrimSpace(setting.AccountPaymentProjectKey) != "" &&
+		strings.TrimSpace(setting.AccountPaymentEnvironment) != "" &&
+		strings.TrimSpace(setting.AccountPaymentKeyID) != "" &&
+		strings.TrimSpace(setting.AccountPaymentServiceSecret) != "" &&
+		strings.TrimSpace(setting.AccountPaymentDefinitionVersion) != "" &&
+		strings.TrimSpace(setting.AccountPaymentItemRef) != "" &&
+		strings.TrimSpace(setting.AccountPaymentCurrency) != ""
+}
+
+func isAccountWebhookEnabled() bool {
+	return isAccountTopUpEnabled()
+}
+
 func isEpayTopUpEnabled() bool {
 	if !isPaymentComplianceConfirmed() {
 		return false

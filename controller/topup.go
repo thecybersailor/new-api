@@ -53,6 +53,25 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	if isAccountTopUpEnabled() {
+		hasAccount := false
+		for _, method := range payMethods {
+			if method["type"] == model.PaymentMethodAccount {
+				hasAccount = true
+				break
+			}
+		}
+
+		if !hasAccount {
+			payMethods = append(payMethods, map[string]string{
+				"name":      "Account",
+				"type":      model.PaymentMethodAccount,
+				"color":     "#0F766E",
+				"min_topup": strconv.FormatInt(getAccountMinTopup(), 10),
+			})
+		}
+	}
+
 	// Waffo Pancake is displayed above the standard Waffo gateway.
 	enableWaffoPancake := isWaffoPancakeTopUpEnabled()
 	if enableWaffoPancake {
@@ -100,6 +119,7 @@ func GetTopUpInfo(c *gin.Context) {
 		"enable_online_topup":              isEpayTopUpEnabled(),
 		"enable_stripe_topup":              isStripeTopUpEnabled(),
 		"enable_creem_topup":               isCreemTopUpEnabled(),
+		"enable_account_topup":             isAccountTopUpEnabled(),
 		"enable_waffo_topup":               enableWaffo,
 		"enable_waffo_pancake_topup":       enableWaffoPancake,
 		"enable_redemption":                complianceConfirmed,
@@ -115,6 +135,7 @@ func GetTopUpInfo(c *gin.Context) {
 		"pay_methods":             payMethods,
 		"min_topup":               operation_setting.MinTopUp,
 		"stripe_min_topup":        setting.StripeMinTopUp,
+		"account_min_topup":       getAccountMinTopup(),
 		"waffo_min_topup":         setting.WaffoMinTopUp,
 		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
 		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,

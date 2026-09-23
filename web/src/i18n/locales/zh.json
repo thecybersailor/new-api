@@ -188,6 +188,7 @@
     "Access Zhipu models through the legacy API": "通过智谱旧版 API 接入模型服务",
     "Access Zhipu models through the V4 API": "通过智谱 V4 API 接入模型服务",
     "AccessKey / SecretAccessKey": "AccessKey / SecretAccessKey",
+    "Account": "Account",
     "Account Actions": "账户操作",
     "Account binding": "账户绑定",
     "Account Binding Management": "账户绑定管理",

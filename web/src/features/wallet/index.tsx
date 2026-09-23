@@ -200,6 +200,7 @@ export function Wallet(props: WalletProps) {
       selectedWaffoMethodIndex,
       {
         regular: processPayment,
+        account: (amount) => processPayment(amount, PAYMENT_TYPES.ACCOUNT),
         waffo: processWaffoPayment,
         waffoPancake: processWaffoPancakePayment,
       }

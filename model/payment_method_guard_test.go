@@ -353,3 +353,40 @@ func TestRechargeEpayEnforcesFinalWalletQuotaLimit(t *testing.T) {
 		})
 	}
 }
+
+func TestRechargeAccountCreditsQuotaExactlyOnce(t *testing.T) {
+	truncateTables(t)
+
+	oldQuotaPerUnit := common.QuotaPerUnit
+	common.QuotaPerUnit = 500000
+	t.Cleanup(func() { common.QuotaPerUnit = oldQuotaPerUnit })
+
+	user := insertUserForPaymentGuardTest(t, 507, 0)
+	order := createEpayTestOrder(t, user.Id, "ACCOUNTTESTONCE", PaymentProviderAccount, common.TopUpStatusPending)
+	order.PaymentMethod = PaymentMethodAccount
+	require.NoError(t, DB.Save(&order).Error)
+
+	alreadyDone, err := RechargeAccount(order.TradeNo, "127.0.0.1")
+	require.NoError(t, err)
+	assert.False(t, alreadyDone)
+	assert.Equal(t, 2*500000, getUserQuotaForPaymentGuardTest(t, user.Id))
+	assert.Equal(t, common.TopUpStatusSuccess, getTopUpStatusForPaymentGuardTest(t, order.TradeNo))
+
+	alreadyDone, err = RechargeAccount(order.TradeNo, "127.0.0.1")
+	require.NoError(t, err)
+	assert.True(t, alreadyDone)
+	assert.Equal(t, 2*500000, getUserQuotaForPaymentGuardTest(t, user.Id))
+}
+
+func TestRechargeAccountRejectsForeignProvider(t *testing.T) {
+	truncateTables(t)
+
+	user := insertUserForPaymentGuardTest(t, 508, 0)
+	order := createEpayTestOrder(t, user.Id, "ACCOUNTTESTSTRIPE", PaymentProviderStripe, common.TopUpStatusPending)
+
+	alreadyDone, err := RechargeAccount(order.TradeNo, "127.0.0.1")
+	require.ErrorIs(t, err, ErrPaymentMethodMismatch)
+	assert.False(t, alreadyDone)
+	assert.Equal(t, 0, getUserQuotaForPaymentGuardTest(t, user.Id))
+	assert.Equal(t, common.TopUpStatusPending, getTopUpStatusForPaymentGuardTest(t, order.TradeNo))
+}

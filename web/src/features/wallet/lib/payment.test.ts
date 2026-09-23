@@ -36,6 +36,38 @@ describe('payment type classification', () => {
   })
 })
 
+describe('account payment dispatch', () => {
+  test('routes Account checkout through its dedicated processor', async () => {
+    const calls: string[] = []
+    const success = await dispatchSelectedPayment(
+      { name: 'Account', type: PAYMENT_TYPES.ACCOUNT },
+      120,
+      null,
+      {
+        regular: async () => {
+          calls.push('regular')
+          return false
+        },
+        account: async (amount) => {
+          calls.push(`account:${amount}`)
+          return true
+        },
+        waffo: async () => {
+          calls.push('waffo')
+          return false
+        },
+        waffoPancake: async () => {
+          calls.push('pancake')
+          return false
+        },
+      }
+    )
+
+    expect(success).toBe(true)
+    expect(calls).toEqual(['account:120'])
+  })
+})
+
 describe('payment dispatch', () => {
   test('keeps the selected Waffo method index through confirmation', async () => {
     const calls: string[] = []
@@ -46,6 +78,10 @@ describe('payment dispatch', () => {
       {
         regular: async () => {
           calls.push('regular')
+          return false
+        },
+        account: async () => {
+          calls.push('account')
           return false
         },
         waffo: async (amount, index) => {
@@ -71,6 +107,7 @@ describe('payment dispatch', () => {
       null,
       {
         regular: async () => false,
+        account: async () => false,
         waffo: async () => {
           called = true
           return true

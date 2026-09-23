@@ -188,6 +188,7 @@
     "Access Zhipu models through the legacy API": "Доступ к моделям Zhipu через прежний API",
     "Access Zhipu models through the V4 API": "Доступ к моделям Zhipu через API V4",
     "AccessKey / SecretAccessKey": "AccessKey / SecretAccessKey",
+    "Account": "Account",
     "Account Actions": "Действия с аккаунтом",
     "Account binding": "Привязка аккаунта",
     "Account Binding Management": "Управление привязкой аккаунта",
