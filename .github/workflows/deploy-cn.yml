@@ -63,7 +63,8 @@ jobs:
         run: |
           set -euo pipefail
           image="$ACR_REGISTRY/$ACR_REPOSITORY:cn-$GITHUB_SHA"
-          docker buildx build --platform linux/amd64 --file Dockerfile \
+          # ACR personal edition does not accept Buildx provenance manifests.
+          docker buildx build --platform linux/amd64 --provenance=false --file Dockerfile \
             --tag "$image" --push \
             --cache-from type=gha,scope=new-api-cn \
             --cache-to type=gha,mode=max,scope=new-api-cn .
