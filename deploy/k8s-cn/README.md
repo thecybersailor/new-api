@@ -10,7 +10,7 @@
 
 ## 首次初始化
 
-1. 通过控制集群 `aiworker/pgsql` 的本地端口转发建立独立数据库和账号。不要复用海外 DSN；应用账号应为 `new_api_cn` 库的 owner。
+1. 通过控制集群 `aiworker/pgsql` 的本地端口转发建立独立数据库和账号。不要复用海外 DSN；应用账号应为 `new_api_cn` 库的 owner。RDS 模板的 `public` schema 可能仍属于管理员；连接到新库后执行 `ALTER SCHEMA public OWNER TO new_api_cn; REVOKE CREATE ON SCHEMA public FROM PUBLIC; GRANT USAGE, CREATE ON SCHEMA public TO new_api_cn;`，并验证该账号具备建表权限。
 2. 创建 namespace；在其中创建 `new-api` Secret，包含 `SQL_DSN`、独立随机 `SESSION_SECRET` 和 `CRYPTO_SECRET`。SQL_DSN 必须指向上述国内库；键缺失将阻止 Pod 启动，避免回退到 SQLite。
 3. 创建 ACR 拉取 Secret `acr-pull` 和域名证书 Secret `tls-dantoken-cn`。
 4. 管理员执行 `kubectl --context aiworker-cn apply -k deploy/k8s-cn`，以及 `kubectl --context aiworker-cn apply -f deploy/k8s-cn/deployer-rbac.yaml`。bootstrap 镜像是占位符，首次 Action 部署前应用不会就绪。
