@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: new-api
+  namespace: new-api-cn
+data:
+  PORT: "3000"
+  TZ: Asia/Shanghai
+  SESSION_COOKIE_SECURE: "true"
+  SESSION_COOKIE_TRUSTED_URL: https://dantoken.cn
+  ERROR_LOG_ENABLED: "true"
+  BATCH_UPDATE_ENABLED: "true"
+  NODE_NAME: new-api-cn-0

@@ -1,0 +1,100 @@
+name: Deploy to China (dantoken.cn)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-cn-production
+  cancel-in-progress: false
+
+env:
+  ACR_REGISTRY: registry.cn-hangzhou.aliyuncs.com
+  ACR_REPOSITORY: thecybersailor/new-api
+  KUBE_NAMESPACE: new-api-cn
+
+jobs:
+  deploy:
+    name: Build and deploy dantoken.cn
+    runs-on: ubuntu-latest
+    environment: production-cn
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
+        with:
+          version: v1.35.0
+
+      - name: Configure China cluster access
+        env:
+          KUBE_CONFIG_CN: ${{ secrets.KUBE_CONFIG_CN }}
+        run: |
+          set -euo pipefail
+          : "${KUBE_CONFIG_CN:?Set production-cn secret KUBE_CONFIG_CN to the deployment kubeconfig}"
+          umask 077
+          printf '%s' "$KUBE_CONFIG_CN" > "$RUNNER_TEMP/kubeconfig-cn"
+          export KUBECONFIG="$RUNNER_TEMP/kubeconfig-cn"
+          echo "KUBECONFIG=$KUBECONFIG" >> "$GITHUB_ENV"
+          # Infrastructure, database and runtime secrets are bootstrapped separately.
+          kubectl -n "$KUBE_NAMESPACE" get deployment/new-api
+          kubectl -n "$KUBE_NAMESPACE" get pvc/new-api-data service/new-api ingress/new-api -o name
+
+      - name: Log in to Aliyun Container Registry
+        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4 # v4.3.0
+        with:
+          registry: ${{ env.ACR_REGISTRY }}
+          username: ${{ secrets.ALIYUN_ACR_USERNAME }}
+          password: ${{ secrets.ALIYUN_ACR_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Write build version
+        run: printf '%s\n' "$GITHUB_SHA" > VERSION
+
+      - name: Build and push image
+        run: |
+          set -euo pipefail
+          image="$ACR_REGISTRY/$ACR_REPOSITORY:cn-$GITHUB_SHA"
+          docker buildx build --platform linux/amd64 --file Dockerfile \
+            --tag "$image" --push \
+            --cache-from type=gha,scope=new-api-cn \
+            --cache-to type=gha,mode=max,scope=new-api-cn .
+          echo "IMAGE_URI=$image" >> "$GITHUB_ENV"
+
+      - name: Deploy image
+        run: |
+          set -euo pipefail
+          kubectl -n "$KUBE_NAMESPACE" set image deployment/new-api new-api="$IMAGE_URI"
+          kubectl -n "$KUBE_NAMESPACE" rollout status deployment/new-api --timeout=10m
+
+      - name: Verify public endpoint
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 6 --retry-delay 10 \
+            https://dantoken.cn/api/status | \
+            jq -e --arg version "$GITHUB_SHA" '.success == true and .data.version == $version'
+
+      - name: Print deployment status on failure
+        if: failure()
+        run: |
+          kubectl -n "$KUBE_NAMESPACE" get deployment,pod,pvc,service -o wide || true
+          kubectl -n "$KUBE_NAMESPACE" get events --sort-by=.lastTimestamp | tail -30 || true
+
+      - name: Summarize deployment
+        env:
+          IMAGE: ${{ env.IMAGE_URI }}
+        run: |
+          {
+            echo '## China deployment'
+            echo '- URL: https://dantoken.cn'
+            echo '- Namespace: new-api-cn'
+            printf -- '- Image: `%s`\n' "$IMAGE"
+          } >> "$GITHUB_STEP_SUMMARY"

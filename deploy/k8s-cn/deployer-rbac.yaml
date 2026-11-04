@@ -1,0 +1,41 @@
+# Bootstrap once with a cluster administrator. Do not include in application kustomization.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: github-deployer
+  namespace: new-api-cn
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: github-deployer
+  namespace: new-api-cn
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [new-api]
+    verbs: [get, watch, patch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets]
+    verbs: [get, list, watch]
+  - apiGroups: ['']
+    resources: [pods, services, persistentvolumeclaims, events]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    resourceNames: [new-api]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: github-deployer
+  namespace: new-api-cn
+subjects:
+  - kind: ServiceAccount
+    name: github-deployer
+    namespace: new-api-cn
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: github-deployer

@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: new-api
+  namespace: new-api-cn
+  annotations:
+    alb.ingress.kubernetes.io/ssl-redirect: 'true'
+spec:
+  ingressClassName: alb
+  tls:
+    - hosts:
+        - dantoken.cn
+      secretName: tls-dantoken-cn
+  rules:
+    - host: dantoken.cn
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: new-api
+                port:
+                  number: 80
