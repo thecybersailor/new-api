@@ -13,8 +13,19 @@ spec:
     - hosts:
         - dantoken.cn
         - www.dantoken.cn
+        - api.dantoken.cn
       secretName: tls-dantoken-cn
   rules:
+    - host: api.dantoken.cn
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: new-api
+                port:
+                  number: 80
     - host: dantoken.cn
       http:
         paths:
