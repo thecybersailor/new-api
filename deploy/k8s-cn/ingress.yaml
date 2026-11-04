@@ -5,11 +5,14 @@ metadata:
   namespace: new-api-cn
   annotations:
     alb.ingress.kubernetes.io/ssl-redirect: 'true'
+    alb.ingress.kubernetes.io/actions.www-redirect: |
+      [{"type":"Redirect","RedirectConfig":{"host":"dantoken.cn","path":"${path}","port":"443","protocol":"https","query":"${query}","httpCode":"301"}}]
 spec:
   ingressClassName: alb
   tls:
     - hosts:
         - dantoken.cn
+        - www.dantoken.cn
       secretName: tls-dantoken-cn
   rules:
     - host: dantoken.cn
@@ -22,3 +25,13 @@ spec:
                 name: new-api
                 port:
                   number: 80
+    - host: www.dantoken.cn
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: www-redirect
+                port:
+                  name: use-annotation
