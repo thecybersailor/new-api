@@ -15,16 +15,15 @@ const retiredThemeOptionKey = "theme.frontend"
 type legacyOptionTransform func(string) (string, error)
 
 // MigrateRetiredFrontendOptions normalizes options that belonged to the
-// removed dashboard frontend. Each legacy console setting is migrated in its
-// own transaction so one malformed value cannot block the other settings.
+// removed dashboard frontend. Each setting has its own transaction. Malformed
+// legacy values remain intact; storage errors stop before later migrations.
 func MigrateRetiredFrontendOptions() error {
 	if DB == nil {
 		return errors.New("database is not initialized")
 	}
 
-	var migrationErrors []error
 	if err := normalizeRetiredThemeOption(); err != nil {
-		migrationErrors = append(migrationErrors, fmt.Errorf("normalize %s: %w", retiredThemeOptionKey, err))
+		return fmt.Errorf("normalize %s: %w", retiredThemeOptionKey, err)
 	}
 
 	migrations := []struct {
@@ -38,13 +37,13 @@ func MigrateRetiredFrontendOptions() error {
 	}
 	for _, migration := range migrations {
 		if err := migrateLegacyOption(migration.source, migration.target, migration.transform); err != nil {
-			migrationErrors = append(migrationErrors, err)
+			return err
 		}
 	}
 	if err := migrateLegacyUptimeOptions(); err != nil {
-		migrationErrors = append(migrationErrors, err)
+		return err
 	}
-	return errors.Join(migrationErrors...)
+	return nil
 }
 
 func normalizeRetiredThemeOption() error {
