@@ -93,6 +93,7 @@ export function getAvailableOAuthProviders(
 export function hasOAuthProviders(status: SystemStatus | null): boolean {
   if (!status) return false
   return !!(
+    status.danqiuos_login ||
     status.github_oauth ||
     status.discord_oauth ||
     status.oidc_enabled ||

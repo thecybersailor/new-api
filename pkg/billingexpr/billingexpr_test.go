@@ -1196,3 +1196,28 @@ func TestFrontendSimulationContract(t *testing.T) {
 		})
 	}
 }
+
+func TestCatalogCostUpperBoundProof(t *testing.T) {
+	variables := map[string]billingexpr.NumericRange{"p": {Min: 0, Max: 1000}, "c": {Min: 0, Max: 100}, "len": {Min: 0, Max: 1000}}
+	for _, tc := range []struct {
+		expression string
+		minimum    float64
+	}{
+		{`p < 500 ? tier("expensive", p * 100 + c) : tier("cheap", p)`, 100100},
+		{`true ? tier("a", fixed(0.01)) : tier("b", fixed(0.2))`, 200000},
+		{`tier("bounded", p * 2 + c * 3)`, 2300},
+		{`tier("usage", u("seconds") * 0.01)`, 0.1},
+		{`tier("free", fixed(0))`, 0},
+	} {
+		t.Run(tc.expression, func(t *testing.T) {
+			bound, err := billingexpr.CostUpperBound(tc.expression, variables, map[string]billingexpr.NumericRange{"seconds": {Min: 0, Max: 10}}, billingexpr.RequestInput{})
+			require.NoError(t, err)
+			assert.GreaterOrEqual(t, bound, tc.minimum)
+			assert.InDelta(t, tc.minimum, bound, 1e-8)
+		})
+	}
+	for _, expression := range []string{`tier("unbounded", p / c)`, `tier("unbounded", u("unknown"))`, `tier("overflow", p * 1e308)`, `tier("unknown", ai)`} {
+		_, err := billingexpr.CostUpperBound(expression, variables, nil, billingexpr.RequestInput{})
+		require.Error(t, err, expression)
+	}
+}

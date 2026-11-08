@@ -108,6 +108,7 @@ func setupRelayRouterTestDB(t *testing.T) {
 	require.NoError(t, model.InitDB())
 	model.LOG_DB = model.DB
 	require.NoError(t, model.DB.AutoMigrate(&model.User{}, &model.Token{}, &model.Ability{}))
+	require.NoError(t, model.DB.AutoMigrate(model.CatalogIntegrationModels()...))
 
 	t.Cleanup(func() {
 		if sqlDB, err := model.DB.DB(); err == nil {
@@ -123,4 +124,34 @@ func setupRelayRouterTestDB(t *testing.T) {
 			require.NoError(t, os.Unsetenv("SQL_DSN"))
 		}
 	})
+}
+
+func TestCatalogRegisteredRoutesFailClosedAndKeepLegacy(t *testing.T) {
+	setupRelayRouterTestDB(t)
+	user := model.User{Username: "integration-user", Status: common.UserStatusEnabled, Group: "default", Quota: 100}
+	require.NoError(t, model.DB.Create(&user).Error)
+	token := model.Token{UserId: user.Id, Key: "catalogfixturekey", Status: common.TokenStatusEnabled, ExpiredTime: -1, UnlimitedQuota: true, Group: "default"}
+	require.NoError(t, model.DB.Create(&token).Error)
+	require.NoError(t, model.DB.Create(&model.CatalogIntegrationBinding{TokenID: token.Id, UserID: user.Id, PrincipalID: "fixture-principal", FixedGroup: "default", Enabled: true}).Error)
+	require.NoError(t, model.DB.Create(&model.Ability{Group: "default", Model: "unverified", ChannelId: 1, Enabled: true}).Error)
+	engine := gin.New()
+	SetRelayRouter(engine)
+	request := httptest.NewRequest(http.MethodGet, "/v1/catalog", nil)
+	request.Header.Set("Authorization", "Bearer "+token.Key)
+	recorder := httptest.NewRecorder()
+	engine.ServeHTTP(recorder, request)
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+	var payload map[string]any
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &payload))
+	assert.Equal(t, true, payload["complete"])
+	models := payload["models"].([]any)
+	require.Empty(t, models)
+	assert.Equal(t, "supply_empty", payload["emptyReason"])
+	assert.EqualValues(t, 2, payload["schemaVersion"])
+	request = httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"unverified"}`))
+	request.Header.Set("Authorization", "Bearer "+token.Key)
+	recorder = httptest.NewRecorder()
+	engine.ServeHTTP(recorder, request)
+	require.NotEqual(t, http.StatusOK, recorder.Code)
+	assert.Contains(t, recorder.Body.String(), "REQUEST_INVALID")
 }

@@ -2,6 +2,8 @@ package jsplugin
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
@@ -110,14 +112,15 @@ type Options struct {
 }
 
 type Engine struct {
-	key       string
-	version   string
-	timeout   time.Duration
-	now       func() time.Time
-	log       func(string)
-	module    *sobek.SourceTextModuleRecord
-	pool      chan *runtimeInstance
-	semaphore chan struct{}
+	sourceDigest string
+	key          string
+	version      string
+	timeout      time.Duration
+	now          func() time.Time
+	log          func(string)
+	module       *sobek.SourceTextModuleRecord
+	pool         chan *runtimeInstance
+	semaphore    chan struct{}
 }
 
 type runtimeInstance struct {
@@ -164,14 +167,15 @@ func Compile(source string, options Options) (*Engine, error) {
 	}
 
 	engine := &Engine{
-		key:       options.Key,
-		version:   options.Version,
-		timeout:   timeout,
-		now:       now,
-		log:       options.Log,
-		module:    module,
-		semaphore: make(chan struct{}, concurrency),
-		pool:      make(chan *runtimeInstance, concurrency),
+		sourceDigest: digestPluginSource(source),
+		key:          options.Key,
+		version:      options.Version,
+		timeout:      timeout,
+		now:          now,
+		log:          options.Log,
+		module:       module,
+		semaphore:    make(chan struct{}, concurrency),
+		pool:         make(chan *runtimeInstance, concurrency),
 	}
 	instance, err := engine.newRuntime(context.Background())
 	if err != nil {
@@ -595,4 +599,11 @@ func sourceWithoutCommentsAndStrings(source string) string {
 		output.WriteByte(current)
 	}
 	return output.String()
+}
+
+// SourceDigest identifies executable plugin content across process restarts.
+func (e *Engine) SourceDigest() string { return e.sourceDigest }
+func digestPluginSource(source string) string {
+	h := sha256.Sum256([]byte(source))
+	return hex.EncodeToString(h[:])
 }

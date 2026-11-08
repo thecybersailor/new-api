@@ -88,6 +88,7 @@ export interface ApiResponse<T = unknown> {
 // ============================================================================
 
 export interface SystemStatus {
+  danqiuos_login?: boolean
   success?: boolean
   message?: string
   data?: {

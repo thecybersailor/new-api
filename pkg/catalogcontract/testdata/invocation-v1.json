@@ -1,0 +1,59 @@
+{
+  "invocationId": "fixture-invocation",
+  "clientRequestId": "fixture-call",
+  "requestHash": "fixture-request-hash",
+  "executionState": "succeeded",
+  "billingState": "settled",
+  "result": {
+    "text": "fixture-only"
+  },
+  "artifacts": [],
+  "receipt": {
+    "sourceId": "fixture-dantoken",
+    "integrationPrincipalId": "fixture-principal",
+    "receiptId": "fixture-receipt",
+    "revision": 1,
+    "predecessorRevision": 0,
+    "amountMode": "cumulative",
+    "isFinal": true,
+    "quoteId": "fixture-quote",
+    "pricingRevision": "price-v1",
+    "rawUsage": {
+      "input_tokens": 10,
+      "output_tokens": 5
+    },
+    "cost": {
+      "currency": "USD",
+      "amountMicros": "1000"
+    },
+    "settledAt": "2026-11-06T00:01:00Z",
+    "rawQuota": "500",
+    "quotaPerUnit": "500000",
+    "roundingVersion": "fixture-rounding-v1"
+  },
+  "receipts": [
+    {
+      "sourceId": "fixture-dantoken",
+      "integrationPrincipalId": "fixture-principal",
+      "receiptId": "fixture-receipt",
+      "revision": 1,
+      "predecessorRevision": 0,
+      "amountMode": "cumulative",
+      "isFinal": true,
+      "quoteId": "fixture-quote",
+      "pricingRevision": "price-v1",
+      "rawUsage": {
+        "input_tokens": 10,
+        "output_tokens": 5
+      },
+      "cost": {
+        "currency": "USD",
+        "amountMicros": "1000"
+      },
+      "settledAt": "2026-11-06T00:01:00Z",
+      "rawQuota": "500",
+      "quotaPerUnit": "500000",
+      "roundingVersion": "fixture-rounding-v1"
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+{
+  "bindingVersion": "fixture-binding-v2",
+  "authorizationRevision": 1,
+  "catalogRevision": 1,
+  "totalCount": 8,
+  "contentDigest": "fea802c9f67b4db13be60375c5d343a6d729f3c4d5664b854ca100e72cdbef65",
+  "schemaVersion": 2,
+  "sourceId": "fixture-dantoken",
+  "scopeId": "fixture-scope",
+  "snapshotId": "fixture-snapshot-v1",
+  "generatedAt": "2026-11-06T00:00:00Z",
+  "validUntil": "2026-11-07T00:00:00Z",
+  "complete": true,
+  "models": [
+    {
+      "id": "fixture/text_generation",
+      "displayName": "Fixture text_generation",
+      "supplyState": "active",
+      "operations": [
+        {
+          "operation": "text_generation",
+          "operationRevision": "op-v1",
+          "inputSchema": {
+            "type": "object"
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "limits": {},
+          "inputModalities": [
+            "text"
+          ],
+          "outputModalities": [
+            "text"
+          ],
+          "executionMode": [
+            "sync"
+          ],
+          "protocol": "openai.chat_completions",
+          "submitPath": "/v1/chat/completions",
+          "pricingRevision": "price-v1",
+          "usageSchema": {
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fixture/image_generation",
+      "displayName": "Fixture image_generation",
+      "supplyState": "active",
+      "operations": [
+        {
+          "operation": "image_generation",
+          "operationRevision": "op-v1",
+          "inputSchema": {
+            "type": "object"
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "limits": {},
+          "inputModalities": [
+            "text"
+          ],
+          "outputModalities": [
+            "image"
+          ],
+          "executionMode": [
+            "sync"
+          ],
+          "protocol": "openai.images.generations",
+          "submitPath": "/v1/images/generations",
+          "pricingRevision": "price-v1",
+          "usageSchema": {
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fixture/image_edit",
+      "displayName": "Fixture image_edit",
+      "supplyState": "active",
+      "operations": [
+        {
+          "operation": "image_edit",
+          "operationRevision": "op-v1",
+          "inputSchema": {
+            "type": "object"
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "limits": {},
+          "inputModalities": [
+            "image"
+          ],
+          "outputModalities": [
+            "image"
+          ],
+          "executionMode": [
+            "sync"
+          ],
+          "protocol": "openai.images.edits",
+          "submitPath": "/v1/images/edits",
+          "pricingRevision": "price-v1",
+          "usageSchema": {
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fixture/video_generation",
+      "displayName": "Fixture video_generation",
+      "supplyState": "active",
+      "operations": [
+        {
+          "operation": "video_generation",
+          "operationRevision": "op-v1",
+          "inputSchema": {
+            "type": "object"
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "limits": {},
+          "inputModalities": [
+            "text"
+          ],
+          "outputModalities": [
+            "video"
+          ],
+          "executionMode": [
+            "async"
+          ],
+          "protocol": "openai.videos",
+          "submitPath": "/v1/videos",
+          "pricingRevision": "price-v1",
+          "usageSchema": {
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fixture/audio_transcription",
+      "displayName": "Fixture audio_transcription",
+      "supplyState": "active",
+      "operations": [
+        {
+          "operation": "audio_transcription",
+          "operationRevision": "op-v1",
+          "inputSchema": {
+            "type": "object"
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "limits": {},
+          "inputModalities": [
+            "audio"
+          ],
+          "outputModalities": [
+            "text"
+          ],
+          "executionMode": [
+            "sync"
+          ],
+          "protocol": "openai.audio.transcriptions",
+          "submitPath": "/v1/audio/transcriptions",
+          "pricingRevision": "price-v1",
+          "usageSchema": {
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fixture/speech_synthesis",
+      "displayName": "Fixture speech_synthesis",
+      "supplyState": "active",
+      "operations": [
+        {
+          "operation": "speech_synthesis",
+          "operationRevision": "op-v1",
+          "inputSchema": {
+            "type": "object"
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "limits": {},
+          "inputModalities": [
+            "text"
+          ],
+          "outputModalities": [
+            "audio"
+          ],
+          "executionMode": [
+            "sync"
+          ],
+          "protocol": "openai.audio.speech",
+          "submitPath": "/v1/audio/speech",
+          "pricingRevision": "price-v1",
+          "usageSchema": {
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fixture/embedding",
+      "displayName": "Fixture embedding",
+      "supplyState": "active",
+      "operations": [
+        {
+          "operation": "embedding",
+          "operationRevision": "op-v1",
+          "inputSchema": {
+            "type": "object"
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "limits": {},
+          "inputModalities": [
+            "text"
+          ],
+          "outputModalities": [
+            "embedding"
+          ],
+          "executionMode": [
+            "sync"
+          ],
+          "protocol": "openai.embeddings",
+          "submitPath": "/v1/embeddings",
+          "pricingRevision": "price-v1",
+          "usageSchema": {
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fixture/multimodal_generation",
+      "displayName": "Fixture multimodal_generation",
+      "supplyState": "active",
+      "operations": [
+        {
+          "operation": "multimodal_generation",
+          "operationRevision": "op-v1",
+          "inputSchema": {
+            "type": "object"
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "limits": {},
+          "inputModalities": [
+            "text"
+          ],
+          "outputModalities": [
+            "audio"
+          ],
+          "executionMode": [
+            "sync"
+          ],
+          "protocol": "openai.responses",
+          "submitPath": "/v1/responses",
+          "pricingRevision": "price-v1",
+          "usageSchema": {
+            "type": "object"
+          }
+        }
+      ]
+    }
+  ]
+}

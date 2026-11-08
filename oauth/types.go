@@ -2,17 +2,20 @@ package oauth
 
 // OAuthToken represents the token received from OAuth provider
 type OAuthToken struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	RefreshToken string `json:"refresh_token,omitempty"`
-	ExpiresIn    int    `json:"expires_in,omitempty"`
-	Scope        string `json:"scope,omitempty"`
-	IDToken      string `json:"id_token,omitempty"`
-	ClientID     string `json:"-"` // Expected OIDC audience from the server-owned flow.
+	VerifiedIdentity *OAuthUser `json:"-"` // DanQiuOS server-verified, single-use assertion only.
+	AccessToken      string     `json:"access_token"`
+	TokenType        string     `json:"token_type"`
+	RefreshToken     string     `json:"refresh_token,omitempty"`
+	ExpiresIn        int        `json:"expires_in,omitempty"`
+	Scope            string     `json:"scope,omitempty"`
+	IDToken          string     `json:"id_token,omitempty"`
+	ClientID         string     `json:"-"` // Expected OIDC audience from the server-owned flow.
 }
 
 // OAuthUser represents the user info from OAuth provider
 type OAuthUser struct {
+	// ValidUntil is set only for a verified DanQiuOS session assertion.
+	ValidUntil int64 `json:"valid_until,omitempty"`
 	// ProviderUserID is the unique identifier from the OAuth provider
 	ProviderUserID string
 	// Username is the username from the OAuth provider (e.g., GitHub login)

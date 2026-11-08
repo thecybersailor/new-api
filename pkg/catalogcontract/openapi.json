@@ -1,0 +1,792 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DanToken managed catalog integration",
+    "version": "1.0.0",
+    "description": "Local implementation contract; no real model is admitted by this schema. Native model endpoints retain their own protocols and require X-DanToken-Quote-ID and Idempotency-Key for registered integrations."
+  },
+  "servers": [
+    {
+      "url": "https://api.dantoken.cn"
+    }
+  ],
+  "security": [
+    {
+      "integrationToken": []
+    }
+  ],
+  "paths": {
+    "/v1/catalog": {
+      "get": {
+        "operationId": "readCatalog",
+        "responses": {
+          "200": {
+            "description": "CatalogSnapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "snapshotId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "description": "The current supplier returns one complete immutable page. Nonempty cursors are rejected. Empty operations means the model has no admitted executor, not free or text-compatible."
+      }
+    },
+    "/v1/quotes": {
+      "post": {
+        "operationId": "createQuote",
+        "responses": {
+          "200": {
+            "description": "Quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Quote"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteRequest"
+              }
+            }
+          }
+        },
+        "description": "No inference or supplier debit. Registered trusted adapter required. Frozen bound, pricing evidence and request digest are persisted. Existing accepted clientRequestId cannot be re-quoted."
+      }
+    },
+    "/v1/invocations/{clientRequestId}": {
+      "get": {
+        "operationId": "readInvocation",
+        "responses": {
+          "200": {
+            "description": "Invocation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invocation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "clientRequestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "description": "Current credential and invocation authorization are mandatory. Exhausted quota, retired model or expired original quote do not block recovery. receipts is the ordered immutable history; receipt remains the latest revision."
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "integrationToken": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Money": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "const": "USD"
+          },
+          "amountMicros": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$"
+          }
+        },
+        "required": [
+          "currency",
+          "amountMicros"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "nextAction": {
+            "type": "string"
+          },
+          "retryable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "nextAction",
+          "retryable"
+        ]
+      },
+      "OperationDefinition": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "enum": [
+              "text_generation",
+              "image_generation",
+              "image_edit",
+              "video_generation",
+              "audio_transcription",
+              "speech_synthesis",
+              "embedding",
+              "multimodal_generation"
+            ]
+          },
+          "operationRevision": {
+            "type": "string"
+          },
+          "inputSchema": {
+            "type": "object"
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "limits": {
+            "type": "object"
+          },
+          "inputModalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outputModalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "executionMode": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "sync",
+                "stream",
+                "async"
+              ]
+            }
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "submitPath": {
+            "type": "string",
+            "pattern": "^/v1/"
+          },
+          "queryPathTemplate": {
+            "type": "string"
+          },
+          "pricingRevision": {
+            "type": "string"
+          },
+          "usageSchema": {
+            "type": "object"
+          },
+          "capabilities": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "operationRevision",
+          "inputSchema",
+          "outputSchema",
+          "limits",
+          "inputModalities",
+          "outputModalities",
+          "executionMode",
+          "protocol",
+          "submitPath",
+          "pricingRevision",
+          "usageSchema"
+        ]
+      },
+      "CatalogModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "supplyState": {
+            "enum": [
+              "active",
+              "retired",
+              "disabled"
+            ]
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperationDefinition"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "supplyState",
+          "operations"
+        ]
+      },
+      "CatalogSnapshot": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "scopeId": {
+            "type": "string"
+          },
+          "snapshotId": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "nextCursor": {
+            "type": "string"
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogModel"
+            }
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "sourceId",
+          "scopeId",
+          "snapshotId",
+          "generatedAt",
+          "validUntil",
+          "complete",
+          "models"
+        ]
+      },
+      "QuoteRequest": {
+        "type": "object",
+        "properties": {
+          "clientRequestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "snapshotId": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "text_generation",
+              "image_generation",
+              "image_edit",
+              "video_generation",
+              "audio_transcription",
+              "speech_synthesis",
+              "embedding",
+              "multimodal_generation"
+            ]
+          },
+          "operationRevision": {
+            "type": "string"
+          },
+          "request": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "clientRequestId",
+          "snapshotId",
+          "model",
+          "operation",
+          "operationRevision",
+          "request"
+        ]
+      },
+      "Quote": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string"
+          },
+          "scopeId": {
+            "type": "string"
+          },
+          "clientRequestId": {
+            "type": "string"
+          },
+          "requestHash": {
+            "type": "string"
+          },
+          "operationRevision": {
+            "type": "string"
+          },
+          "pricingRevision": {
+            "type": "string"
+          },
+          "pricingSnapshotHash": {
+            "type": "string"
+          },
+          "roundingVersion": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "estimatedCost": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "maxCost": {
+            "$ref": "#/components/schemas/Money"
+          }
+        },
+        "required": [
+          "quoteId",
+          "scopeId",
+          "clientRequestId",
+          "requestHash",
+          "operationRevision",
+          "pricingRevision",
+          "pricingSnapshotHash",
+          "roundingVersion",
+          "expiresAt",
+          "estimatedCost",
+          "maxCost"
+        ]
+      },
+      "Artifact": {
+        "type": "object",
+        "properties": {
+          "artifactId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "mime": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "readPath": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifactId",
+          "type",
+          "mime",
+          "size",
+          "checksum",
+          "readPath"
+        ]
+      },
+      "Receipt": {
+        "type": "object",
+        "properties": {
+          "sourceId": {
+            "type": "string"
+          },
+          "integrationPrincipalId": {
+            "type": "string"
+          },
+          "receiptId": {
+            "type": "string"
+          },
+          "quoteId": {
+            "type": "string"
+          },
+          "pricingRevision": {
+            "type": "string"
+          },
+          "rawQuota": {
+            "type": "string"
+          },
+          "quotaPerUnit": {
+            "type": "string"
+          },
+          "roundingVersion": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "predecessorRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "amountMode": {
+            "const": "cumulative"
+          },
+          "isFinal": {
+            "type": "boolean"
+          },
+          "rawUsage": {
+            "type": "object"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "settledAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "sourceId",
+          "integrationPrincipalId",
+          "receiptId",
+          "quoteId",
+          "pricingRevision",
+          "rawQuota",
+          "quotaPerUnit",
+          "roundingVersion",
+          "revision",
+          "predecessorRevision",
+          "amountMode",
+          "isFinal",
+          "rawUsage",
+          "cost",
+          "settledAt"
+        ],
+        "description": "Supplier currently emits cumulative immutable receipts. Consumers may separately support explicitly declared signed deltas; no implicit conversion is permitted."
+      },
+      "Invocation": {
+        "type": "object",
+        "properties": {
+          "invocationId": {
+            "type": "string"
+          },
+          "clientRequestId": {
+            "type": "string"
+          },
+          "requestHash": {
+            "type": "string"
+          },
+          "executionState": {
+            "enum": [
+              "accepted",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled",
+              "unknown"
+            ]
+          },
+          "billingState": {
+            "enum": [
+              "pending",
+              "settled",
+              "not_charged",
+              "reconciliation_required"
+            ]
+          },
+          "providerTaskId": {
+            "type": "string"
+          },
+          "result": {},
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Artifact"
+            }
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/Receipt"
+          },
+          "receipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Receipt"
+            }
+          }
+        },
+        "required": [
+          "invocationId",
+          "clientRequestId",
+          "requestHash",
+          "executionState",
+          "billingState"
+        ]
+      }
+    }
+  }
+}

@@ -66,6 +66,22 @@ export function useOAuthLogin(
     clearAuthentication()
   }
 
+  const handleDanQiuOSLogin = async () => {
+    setIsLoading(true)
+    try {
+      const authorization = await createOAuthAuthorization('danqiuos', 'login')
+      if (!authorization.authorizationUrl) {
+        throw new AuthOperationError('OAuth failed')
+      }
+      rememberOAuthLoginRedirect(authorization.state, redirectTo)
+      window.location.assign(authorization.authorizationUrl)
+    } catch (error) {
+      handleServerError(AuthOperationError.from(error, t('OAuth failed')))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleGitHubLogin = async () => {
     if (!status?.github_client_id) return
     if (githubButtonDisabled) return
@@ -231,6 +247,7 @@ export function useOAuthLogin(
     isLoading,
     githubButtonText,
     githubButtonDisabled,
+    handleDanQiuOSLogin,
     handleGitHubLogin,
     handleDiscordLogin,
     handleOIDCLogin,

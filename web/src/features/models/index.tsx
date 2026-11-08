@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
@@ -28,6 +28,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
 import { listDeployments } from './api'
+import { CatalogMaintenance } from './catalog/maintenance'
 import { DeploymentAccessGuard } from './components/deployment-access-guard'
 import { DeploymentsTable } from './components/deployments-table'
 import { CreateDeploymentDrawer } from './components/dialogs/create-deployment-drawer'
@@ -50,6 +51,7 @@ const SECTION_META: Record<
   ModelsSectionId,
   { titleKey: string; tabKey: string }
 > = {
+  catalog: { titleKey: 'Integration catalog', tabKey: 'Integration catalog' },
   metadata: {
     titleKey: 'Model management',
     tabKey: 'Models',
@@ -92,9 +94,12 @@ function ModelsContent() {
 
   const meta = SECTION_META[activeSection] ?? SECTION_META.metadata
 
-  let actions = <ModelsPrimaryButtons />
+  let actions: ReactNode = <ModelsPrimaryButtons />
   let content = <ModelsTable />
-  if (activeSection === 'vendors') {
+  if (activeSection === 'catalog') {
+    actions = null
+    content = <CatalogMaintenance />
+  } else if (activeSection === 'vendors') {
     actions = (
       <Button
         size='sm'

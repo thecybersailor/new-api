@@ -16,12 +16,14 @@ export default defineConfig(({ envMode }) => {
     'http://localhost:3000'
 
   const isProd = envMode === 'production'
-  const devProxy = Object.fromEntries(
-    (['/api', '/v1', '/mj', '/pg'] as const).map((key) => [
+  const devProxy = Object.fromEntries([
+    // Keep the browser origin/Host pair for session-authenticated catalog writes.
+    ['/api/catalog-maintenance', { target: serverUrl, changeOrigin: false }],
+    ...(['/api', '/v1', '/mj', '/pg'] as const).map((key) => [
       key,
       { target: serverUrl, changeOrigin: true },
-    ])
-  ) as Record<string, { target: string; changeOrigin: boolean }>
+    ]),
+  ]) as Record<string, { target: string; changeOrigin: boolean }>
 
   return {
     plugins: [pluginReact(), pluginTailwindcss({ optimize: false })],

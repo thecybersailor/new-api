@@ -28,13 +28,15 @@ type TokenDetails struct {
 }
 
 type QuotaInfo struct {
-	InputDetails  TokenDetails
-	OutputDetails TokenDetails
-	ModelName     string
-	UsePrice      bool
-	ModelPrice    float64
-	ModelRatio    float64
-	GroupRatio    float64
+	FrozenPrice     *types.PriceData
+	FrozenQuotaUnit float64
+	InputDetails    TokenDetails
+	OutputDetails   TokenDetails
+	ModelName       string
+	UsePrice        bool
+	ModelPrice      float64
+	ModelRatio      float64
+	GroupRatio      float64
 }
 
 func hasCustomModelRatio(modelName string, currentRatio float64) bool {
@@ -48,7 +50,11 @@ func hasCustomModelRatio(modelName string, currentRatio float64) bool {
 func calculateAudioQuota(info QuotaInfo) (int, *common.QuotaClamp) {
 	if info.UsePrice {
 		modelPrice := decimal.NewFromFloat(info.ModelPrice)
-		quotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
+		unit := common.QuotaPerUnit
+		if info.FrozenPrice != nil {
+			unit = info.FrozenQuotaUnit
+		}
+		quotaPerUnit := decimal.NewFromFloat(unit)
 		groupRatio := decimal.NewFromFloat(info.GroupRatio)
 
 		quota := modelPrice.Mul(quotaPerUnit).Mul(groupRatio)
@@ -58,6 +64,11 @@ func calculateAudioQuota(info QuotaInfo) (int, *common.QuotaClamp) {
 	completionRatio := decimal.NewFromFloat(ratio_setting.GetCompletionRatio(info.ModelName))
 	audioRatio := decimal.NewFromFloat(ratio_setting.GetAudioRatio(info.ModelName))
 	audioCompletionRatio := decimal.NewFromFloat(ratio_setting.GetAudioCompletionRatio(info.ModelName))
+	if info.FrozenPrice != nil {
+		completionRatio = decimal.NewFromFloat(info.FrozenPrice.CompletionRatio)
+		audioRatio = decimal.NewFromFloat(info.FrozenPrice.AudioRatio)
+		audioCompletionRatio = decimal.NewFromFloat(info.FrozenPrice.AudioCompletionRatio)
+	}
 
 	groupRatio := decimal.NewFromFloat(info.GroupRatio)
 	modelRatio := decimal.NewFromFloat(info.ModelRatio)
@@ -283,6 +294,9 @@ func CalcOpenRouterCacheCreateTokens(usage dto.Usage, priceData types.PriceData)
 }
 
 func PostAudioConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usage *dto.Usage, extraContent string) {
+	if relayInfo.CatalogUsageObserver != nil {
+		relayInfo.CatalogUsageObserver(usage)
+	}
 	if usage == nil {
 		usage = &dto.Usage{PromptTokens: relayInfo.GetEstimatePromptTokens(), TotalTokens: relayInfo.GetEstimatePromptTokens()}
 	}
@@ -329,6 +343,12 @@ func PostAudioConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, u
 		UsePrice:   usePrice,
 		ModelRatio: modelRatio,
 		GroupRatio: groupRatio,
+	}
+
+	if relayInfo.CatalogFrozenPricing {
+		quotaInfo.FrozenPrice = &relayInfo.PriceData
+		quotaInfo.FrozenQuotaUnit = relayInfo.CatalogQuotaUnit
+		quotaInfo.ModelPrice = relayInfo.PriceData.ModelPrice
 	}
 
 	quota, clamp := calculateAudioQuota(quotaInfo)

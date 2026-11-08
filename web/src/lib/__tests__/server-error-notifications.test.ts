@@ -442,3 +442,35 @@ it('rejects an unsuccessful setting update so callers cannot proceed as if it sa
   unmount()
   client.clear()
 })
+
+it('exchanges a DanQiuOS callback anonymously through the real interceptor without refreshing or replaying', async () => {
+  const { exchangeDanQiuOSCallback } =
+    await import('@/features/auth/lib/danqiuos')
+  useAuthStore.getState().auth.reset()
+  let calls = 0
+  api.defaults.adapter = async (config) => {
+    calls++
+    expect(config.url).toBe('/api/danqiuos/assertion')
+    expect(config.skipAuthRefresh).toBe(true)
+    expect(config.headers.get('Authorization')).toBeUndefined()
+    return {
+      data: { success: true, data: { code: 'verified-local-assertion' } },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    }
+  }
+  const result = await exchangeDanQiuOSCallback(
+    {
+      pathname: '/auth/callback',
+      search: '?state=browser-flow',
+      hash: `#account_session=${encodeURIComponent(JSON.stringify({ session: { access_token: 'central-access' } }))}`,
+    },
+    { replaceState: vi.fn() }
+  )
+  expect(result).toBe(
+    '/oauth/danqiuos?state=browser-flow&code=verified-local-assertion'
+  )
+  expect(calls).toBe(1)
+})

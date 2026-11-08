@@ -518,6 +518,14 @@ func keepUpstreamRedirectResponse(_ *http.Request, _ []*http.Request) error {
 }
 
 func doRequest(c *gin.Context, req *http.Request, info *common.RelayInfo) (*http.Response, error) {
+	if info.CatalogFrozenPricing {
+		// A managed invocation already crossed its durable send barrier. net/http
+		// must not replay an ambiguous POST, even when an upstream override adds an
+		// Idempotency-Key or the body implements ReplayableBody.
+		req = req.WithContext(c.Request.Context())
+		req.GetBody = nil
+	}
+
 	client, err := service.GetHttpClientWithProxySettings(info.ChannelSetting.Proxy, info.ChannelSetting)
 	if err != nil {
 		return nil, fmt.Errorf("new proxy http client failed: %w", err)
@@ -566,6 +574,9 @@ func doRequest(c *gin.Context, req *http.Request, info *common.RelayInfo) (*http
 	}
 	if resp == nil {
 		return nil, errors.New("resp is nil")
+	}
+	if info.CatalogFrozenPricing && info.CatalogResponseLimit > 0 {
+		resp.Body = http.MaxBytesReader(nil, resp.Body, info.CatalogResponseLimit)
 	}
 	if common2.DebugEnabled {
 		policy := service.NormalizeHTTPTransportPolicy(info.ChannelSetting)

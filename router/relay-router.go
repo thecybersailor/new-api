@@ -17,6 +17,15 @@ func SetRelayRouter(router *gin.Engine) {
 	router.Use(middleware.DecompressRequestMiddleware())
 	router.Use(middleware.BodyStorageCleanup()) // 清理请求体存储
 	router.Use(middleware.StatsMiddleware())
+	router.Use(middleware.CatalogIntegration(controller.NewCatalogRelayEngine))
+	for _, path := range []string{"/v1/catalog", "/v1/invocations/:clientRequestId", "/v1/invocations/:clientRequestId/artifacts/:artifactId"} {
+		router.GET(path, func(c *gin.Context) {
+			c.AbortWithStatusJSON(401, gin.H{"code": "UNAUTHORIZED", "message": "integration authentication required", "nextAction": "provide a registered integration token", "retryable": false})
+		})
+	}
+	router.POST("/v1/quotes", func(c *gin.Context) {
+		c.AbortWithStatusJSON(401, gin.H{"code": "UNAUTHORIZED", "message": "integration authentication required", "nextAction": "provide a registered integration token", "retryable": false})
+	})
 	// https://platform.openai.com/docs/api-reference/introduction
 	modelsRouter := router.Group("/v1/models")
 	modelsRouter.Use(middleware.RouteTag("relay"))

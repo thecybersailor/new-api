@@ -140,6 +140,13 @@ type RelayInfo struct {
 	// Billing 是计费会话，封装了预扣费/结算/退款的统一生命周期。
 	// 初始免费组可为 nil；若 auto 重试切换到付费组，会在发送前创建。
 	Billing BillingSettler
+	// CatalogUsageObserver receives authoritative relay usage before legacy normalization.
+	CatalogUsageObserver   func(*dto.Usage) `json:"-"`
+	CatalogQuoteOnly       bool             `json:"-"`
+	CatalogFrozenPricing   bool             `json:"-"`
+	CatalogQuotaUnit       float64          `json:"-"`
+	CatalogResponseLimit   int64            `json:"-"`
+	CatalogAudioInputPrice float64          `json:"-"`
 	// BillingSource indicates whether this request is billed from wallet quota or subscription.
 	// "" or "wallet" => wallet; "subscription" => subscription
 	BillingSource string
@@ -1234,4 +1241,13 @@ func RemoveGeminiDisabledFields(jsonData []byte) ([]byte, error) {
 		return jsonData, nil
 	}
 	return jsonDataAfter, nil
+}
+
+// BillingQuotaUnit preserves frozen integration quotes while ordinary relays
+// continue using the current gateway policy.
+func (info *RelayInfo) BillingQuotaUnit() float64 {
+	if info != nil && info.CatalogFrozenPricing {
+		return info.CatalogQuotaUnit
+	}
+	return common.QuotaPerUnit
 }

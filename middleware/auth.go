@@ -358,50 +358,51 @@ func TokenAuthReadOnly() func(c *gin.Context) {
 	}
 }
 
-func TokenAuth() func(c *gin.Context) {
-	return func(c *gin.Context) {
-		// 先检测是否为ws
-		applyWebSocketSubprotocolAuthorization(c.Request.Header)
-		// 检查path包含/v1/messages 或 /v1/models
-		if strings.Contains(c.Request.URL.Path, "/v1/messages") || strings.Contains(c.Request.URL.Path, "/v1/models") {
-			anthropicKey := c.Request.Header.Get("x-api-key")
-			if anthropicKey != "" {
-				c.Request.Header.Set("Authorization", "Bearer "+anthropicKey)
-			}
+// relayTokenParts keeps credential precedence identical for the managed catalog
+// guard and legacy relay authentication. Otherwise a secondary provider header
+// could select a different token after the quote guard has already run.
+func relayTokenParts(c *gin.Context) []string {
+	// 先检测是否为ws
+	applyWebSocketSubprotocolAuthorization(c.Request.Header)
+	// 检查path包含/v1/messages 或 /v1/models
+	if strings.Contains(c.Request.URL.Path, "/v1/messages") || strings.Contains(c.Request.URL.Path, "/v1/models") {
+		anthropicKey := c.Request.Header.Get("x-api-key")
+		if anthropicKey != "" {
+			c.Request.Header.Set("Authorization", "Bearer "+anthropicKey)
 		}
-		// gemini api 从query中获取key
-		if c.Request.URL.Path == "/v1/models" ||
-			strings.HasPrefix(c.Request.URL.Path, "/v1beta/models") ||
-			strings.HasPrefix(c.Request.URL.Path, "/v1beta/openai/models") ||
-			strings.HasPrefix(c.Request.URL.Path, "/v1/models/") {
-			skKey := c.Query("key")
-			if skKey != "" {
-				c.Request.Header.Set("Authorization", "Bearer "+skKey)
-			}
-			// 从x-goog-api-key header中获取key
-			xGoogKey := c.Request.Header.Get("x-goog-api-key")
-			if xGoogKey != "" {
-				c.Request.Header.Set("Authorization", "Bearer "+xGoogKey)
-			}
+	}
+	// gemini api 从query中获取key
+	if c.Request.URL.Path == "/v1/models" ||
+		strings.HasPrefix(c.Request.URL.Path, "/v1beta/models") ||
+		strings.HasPrefix(c.Request.URL.Path, "/v1beta/openai/models") ||
+		strings.HasPrefix(c.Request.URL.Path, "/v1/models/") {
+		skKey := c.Query("key")
+		if skKey != "" {
+			c.Request.Header.Set("Authorization", "Bearer "+skKey)
 		}
-		key := c.Request.Header.Get("Authorization")
-		parts := make([]string, 0)
+		// 从x-goog-api-key header中获取key
+		xGoogKey := c.Request.Header.Get("x-goog-api-key")
+		if xGoogKey != "" {
+			c.Request.Header.Set("Authorization", "Bearer "+xGoogKey)
+		}
+	}
+	key := c.Request.Header.Get("Authorization")
+	if strings.HasPrefix(key, "Bearer ") || strings.HasPrefix(key, "bearer ") {
+		key = strings.TrimSpace(key[7:])
+	}
+	if key == "" || key == "midjourney-proxy" {
+		key = c.Request.Header.Get("mj-api-secret")
 		if strings.HasPrefix(key, "Bearer ") || strings.HasPrefix(key, "bearer ") {
 			key = strings.TrimSpace(key[7:])
 		}
-		if key == "" || key == "midjourney-proxy" {
-			key = c.Request.Header.Get("mj-api-secret")
-			if strings.HasPrefix(key, "Bearer ") || strings.HasPrefix(key, "bearer ") {
-				key = strings.TrimSpace(key[7:])
-			}
-			key = strings.TrimPrefix(key, "sk-")
-			parts = strings.Split(key, "-")
-			key = parts[0]
-		} else {
-			key = strings.TrimPrefix(key, "sk-")
-			parts = strings.Split(key, "-")
-			key = parts[0]
-		}
+	}
+	return strings.Split(strings.TrimPrefix(key, "sk-"), "-")
+}
+
+func TokenAuth() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		parts := relayTokenParts(c)
+		key := parts[0]
 		token, err := model.ValidateUserToken(key)
 		if token != nil {
 			id := c.GetInt("id")

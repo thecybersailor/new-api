@@ -62,6 +62,7 @@ export function OAuthProviders({
     isLoading,
     githubButtonText,
     githubButtonDisabled,
+    handleDanQiuOSLogin,
     handleGitHubLogin,
     handleDiscordLogin,
     handleOIDCLogin,
@@ -71,6 +72,14 @@ export function OAuthProviders({
   } = useOAuthLogin(status, redirectTo)
 
   const providerButtons: ProviderButton[] = []
+
+  if (status?.danqiuos_login) {
+    providerButtons.push({
+      key: 'danqiuos',
+      label: t('Continue with {{name}}', { name: 'DanQiuOS' }),
+      onClick: handleDanQiuOSLogin,
+    })
+  }
 
   if (status?.wechat_login && onWeChatLogin) {
     providerButtons.push({
@@ -146,6 +155,13 @@ export function OAuthProviders({
 
   return (
     <div className={cn('space-y-3', className)}>
+      {status?.danqiuos_login && (
+        <p className='text-muted-foreground text-sm'>
+          {t(
+            'Have a DanToken account? Sign in first and link DanQiuOS in Account Security to keep your balance and API keys.'
+          )}
+        </p>
+      )}
       <div className='relative'>
         <div className='absolute inset-0 flex items-center'>
           <span className='w-full border-t' />

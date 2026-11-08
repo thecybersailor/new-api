@@ -286,7 +286,14 @@ func verificationOAuthProviders(user *model.User) ([]VerificationOAuthProvider, 
 			continue
 		}
 		var userID string
-		if custom, ok := provider.(*oauth.GenericOAuthProvider); ok {
+		if slug == "danqiuos" {
+			var claim model.ExternalIdentityClaim
+			err := model.DB.Where("provider = ? AND user_id = ?", slug, user.Id).First(&claim).Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, err
+			}
+			userID = claim.Subject
+		} else if custom, ok := provider.(*oauth.GenericOAuthProvider); ok {
 			userID = bindings[custom.GetProviderId()]
 		} else {
 			switch provider.ProviderUserIDColumn() {

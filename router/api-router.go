@@ -45,6 +45,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/reset_password", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendPasswordResetEmail)
 		apiRouter.POST("/user/reset", middleware.CriticalRateLimit(), anonymousRequestBodyLimit, controller.ResetPassword)
 		// OAuth routes - specific routes must come before :provider wildcard
+		apiRouter.POST("/danqiuos/assertion", middleware.CriticalRateLimit(), middleware.DisableCache(), anonymousRequestBodyLimit, controller.PrepareDanQiuOSAssertion)
 		apiRouter.POST("/oauth/state", middleware.CriticalRateLimit(), middleware.DisableCache(), middleware.TryUserAuth(), anonymousRequestBodyLimit, controller.GenerateOAuthCode)
 		apiRouter.POST("/oauth/email/bind/start", middleware.UserAuth(), middleware.CriticalRateLimit(), middleware.UserCriticalRateLimit("account-security"), middleware.EmailVerificationRateLimit(), middleware.DisableCache(), controller.EmailBindStart)
 		apiRouter.POST("/oauth/email/bind/resend", middleware.UserAuth(), middleware.CriticalRateLimit(), middleware.UserCriticalRateLimit("account-security"), middleware.EmailVerificationRateLimit(), middleware.DisableCache(), controller.EmailBindResend)
@@ -269,6 +270,15 @@ func SetApiRouter(router *gin.Engine) {
 		}
 		apiRouter.GET("/task_plugin_options", middleware.AdminAuth(), middleware.RequirePermission(authz.TaskPluginBind), controller.GetTaskPluginOptions)
 		registerChannelRoutes(apiRouter)
+		catalogRoute := apiRouter.Group("/catalog-maintenance")
+		catalogRoute.Use(middleware.AdminAuth(), middleware.DisableCache())
+		catalogRoute.GET("", middleware.RequirePermission(authz.CatalogRead), controller.GetCatalogMaintenance)
+		catalogRoute.PUT("/draft", middleware.RequirePermission(authz.CatalogEdit), middleware.CatalogMaintenanceWrite(), controller.SaveCatalogMaintenanceDraft)
+		catalogRoute.POST("/preview", middleware.RequirePermission(authz.CatalogRead), middleware.CatalogMaintenanceWrite(), controller.PreviewCatalogMaintenance)
+		catalogRoute.POST("/publish", middleware.RequirePermission(authz.CatalogPublish), middleware.CatalogMaintenanceWrite(), controller.PublishCatalogMaintenance)
+		catalogRoute.POST("/retire", middleware.RequirePermission(authz.CatalogPublish), middleware.CatalogMaintenanceWrite(), controller.RetireCatalogMaintenance)
+		catalogRoute.GET("/bindings", middleware.RequirePermission(authz.CatalogAuthorize), controller.GetCatalogBindings)
+		catalogRoute.PUT("/bindings", middleware.RequirePermission(authz.CatalogAuthorize), middleware.CatalogMaintenanceWrite(), controller.SaveCatalogBinding)
 		registerAuthzRoutes(apiRouter)
 		tokenRoute := apiRouter.Group("/token")
 		tokenRoute.Use(middleware.UserAuth())

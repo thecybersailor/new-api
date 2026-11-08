@@ -30,11 +30,12 @@ type oauthStateRequest struct {
 }
 
 type oauthFlowPayload struct {
-	AffiliateCode   string                         `json:"affiliate_code,omitempty"`
-	Verification    *service.OAuthVerificationFlow `json:"verification,omitempty"`
-	Telegram        *oauth.TelegramOAuthFlow       `json:"telegram,omitempty"`
-	SessionIdentity *service.AuthIdentity          `json:"session_identity,omitempty"`
-	Authorization   *model.AuthFlowAuthorization   `json:"authorization,omitempty"`
+	DanQiuOSBrowserHash string                         `json:"danqiuos_browser_hash,omitempty"`
+	AffiliateCode       string                         `json:"affiliate_code,omitempty"`
+	Verification        *service.OAuthVerificationFlow `json:"verification,omitempty"`
+	Telegram            *oauth.TelegramOAuthFlow       `json:"telegram,omitempty"`
+	SessionIdentity     *service.AuthIdentity          `json:"session_identity,omitempty"`
+	Authorization       *model.AuthFlowAuthorization   `json:"authorization,omitempty"`
 }
 
 // providerParams returns map with Provider key for i18n templates
@@ -64,6 +65,15 @@ func GenerateOAuthCode(c *gin.Context) {
 	sessionID := ""
 	flowPayload := oauthFlowPayload{AffiliateCode: request.Aff}
 	bindingStarted := false
+	danQiuOSSecret := ""
+	if request.Provider == "danqiuos" {
+		if _, err := oauth.DanQiuOSAuthorizationURL("configuration-check"); err != nil || !oauth.GetProvider("danqiuos").IsEnabled() {
+			danQiuOSFailure(c)
+			return
+		}
+		danQiuOSSecret = startDanQiuOSBrowserFlow()
+		flowPayload.DanQiuOSBrowserHash = danQiuOSHash(danQiuOSSecret)
+	}
 	if request.Provider == "telegram" {
 		telegramFlow, err := oauth.NewTelegramOAuthFlow()
 		if err != nil {
@@ -132,6 +142,15 @@ func GenerateOAuthCode(c *gin.Context) {
 	}
 	bindingStarted = request.Intent == model.AuthFlowIntentBind
 	data := gin.H{"flow_token": state, "expires_at": expiresAt.Unix()}
+	if request.Provider == "danqiuos" {
+		authorizationURL, err := oauth.DanQiuOSAuthorizationURL(state)
+		if err != nil {
+			danQiuOSFailure(c)
+			return
+		}
+		setDanQiuOSCookie(c, state, danQiuOSSecret)
+		data["authorization_url"] = authorizationURL
+	}
 	if flowPayload.Telegram != nil {
 		data["authorization_url"] = flowPayload.Telegram.AuthorizationURL(state)
 	}
@@ -212,6 +231,13 @@ func HandleOAuth(c *gin.Context) {
 		return
 	}
 
+	if providerName == "danqiuos" {
+		if validateDanQiuOSBrowser(c, pendingFlow, state) != nil {
+			danQiuOSFailure(c)
+			return
+		}
+		c.Set("danqiuos_state_hash", pendingFlow.TokenHash)
+	}
 	// 3. Check if provider is enabled
 	var telegramPayload oauthFlowPayload
 	if providerName == "telegram" {
@@ -262,6 +288,10 @@ func HandleOAuth(c *gin.Context) {
 	code := c.Query("code")
 	token, err := provider.ExchangeToken(c.Request.Context(), code, c)
 	if err != nil {
+		if providerName == "danqiuos" {
+			danQiuOSFailure(c)
+			return
+		}
 		if providerName == "telegram" {
 			writeSecurityOperationError(c, err)
 			return
@@ -273,6 +303,10 @@ func HandleOAuth(c *gin.Context) {
 	// 6. Get user info
 	oauthUser, err := provider.GetUserInfo(c.Request.Context(), token)
 	if err != nil {
+		if providerName == "danqiuos" {
+			danQiuOSFailure(c)
+			return
+		}
 		if providerName == "telegram" {
 			writeSecurityOperationError(c, err)
 			return
@@ -382,6 +416,12 @@ func handleOAuthBind(c *gin.Context, providerName string, provider oauth.Provide
 		return false, false
 	}
 	_, err = model.ConsumeAuthFlowWithAction(state, match, func(tx *gorm.DB, _ *model.AuthFlow) error {
+		if providerName == "danqiuos" {
+			if err := model.ValidateAuthSessionWithTx(tx, identity); err != nil {
+				return err
+			}
+			return model.ClaimExternalIdentityWithTx(tx, "danqiuos", oauthUser.ProviderUserID, identity.UserID)
+		}
 		if providerName == "telegram" {
 			return model.BindTelegramForSessionWithTx(tx, identity, oauthUser.ProviderUserID)
 		}
@@ -406,6 +446,9 @@ func handleOAuthBind(c *gin.Context, providerName string, provider oauth.Provide
 
 // findOrCreateOAuthUser finds existing user or creates new user
 func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *oauth.OAuthUser, affiliateCode string) (*model.User, error) {
+	if _, ok := provider.(*oauth.DanQiuOSProvider); ok {
+		return findOrCreateDanQiuOSUser(provider, oauthUser)
+	}
 	user := &model.User{}
 	if provider.ProviderUserIDColumn() == "telegram_id" {
 		err := provider.FillUserByProviderID(user, oauthUser.ProviderUserID)

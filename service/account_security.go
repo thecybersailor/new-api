@@ -12,6 +12,7 @@ import (
 
 func UnbindAccountOAuth(identity AuthIdentity, providerID int) error {
 	enabled := model.AccountLoginMethods{
+		DanQiuOS: oauth.GetProvider("danqiuos").IsEnabled(),
 		Password: common.PasswordLoginEnabled,
 		Passkey:  system_setting.PasskeySettingsSnapshot().Enabled,
 		WeChat:   common.WeChatAuthEnabled,

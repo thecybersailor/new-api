@@ -273,6 +273,19 @@ export function AccountBindings({ profile, onUpdate }: AccountBindingsProps) {
       onBind: () => void startOAuthBinding('discord'),
     },
     {
+      id: 'danqiuos',
+      label: 'DanQiuOS',
+      icon: Shield,
+      value: (profile as unknown as Record<string, unknown>).danqiuos_bound
+        ? t('Bound')
+        : undefined,
+      isBound: Boolean(
+        (profile as unknown as Record<string, unknown>).danqiuos_bound
+      ),
+      isEnabled: status?.danqiuos_login || false,
+      onBind: () => void startOAuthBinding('danqiuos'),
+    },
+    {
       id: 'oidc',
       label: t('OIDC'),
       icon: Shield,

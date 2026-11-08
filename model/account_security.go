@@ -60,6 +60,7 @@ func ChangeUserPassword(identity AuthSessionIdentity, update *User, firstPasswor
 // AccountLoginMethods is a snapshot of administrator-enabled login mechanisms.
 // Enrollment is checked inside the transaction, not trusted from this snapshot.
 type AccountLoginMethods struct {
+	DanQiuOS          bool
 	Password          bool
 	Passkey           bool
 	WeChat            bool
@@ -84,6 +85,13 @@ func UnbindUserOAuthForSession(identity AuthSessionIdentity, providerID int, ena
 			return err
 		}
 		hasLogin := enabled.Password && current.Password != "" || enabled.WeChat && current.WeChatId != ""
+		if !hasLogin && enabled.DanQiuOS {
+			var count int64
+			if err := tx.Model(&ExternalIdentityClaim{}).Where("provider = ? AND user_id = ?", "danqiuos", identity.UserID).Count(&count).Error; err != nil {
+				return err
+			}
+			hasLogin = count > 0
+		}
 		columns := map[string]string{
 			"github_id": current.GitHubId, "discord_id": current.DiscordId,
 			"oidc_id": current.OidcId, "linux_do_id": current.LinuxDOId, "telegram_id": current.TelegramId,

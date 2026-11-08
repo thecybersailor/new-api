@@ -1,0 +1,19 @@
+{
+  "quoteId": "fixture-quote",
+  "scopeId": "fixture-scope",
+  "clientRequestId": "fixture-call",
+  "requestHash": "fixture-request-hash",
+  "operationRevision": "op-v1",
+  "pricingRevision": "price-v1",
+  "pricingSnapshotHash": "fixture-price-hash",
+  "expiresAt": "2026-11-06T00:05:00Z",
+  "estimatedCost": {
+    "currency": "USD",
+    "amountMicros": "1000"
+  },
+  "maxCost": {
+    "currency": "USD",
+    "amountMicros": "2000"
+  },
+  "roundingVersion": "fixture-rounding-v1"
+}

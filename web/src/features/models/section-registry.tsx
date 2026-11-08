@@ -22,6 +22,7 @@ import { createSectionRegistry } from '@/features/system-settings/utils/section-
  * Models page section definitions
  */
 const MODELS_SECTIONS = [
+  { id: 'catalog', titleKey: 'Integration catalog', build: () => null },
   {
     id: 'metadata',
     titleKey: 'Models',

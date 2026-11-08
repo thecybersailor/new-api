@@ -133,3 +133,9 @@ func InitializeExternalIdentityClaims() error {
 		return nil
 	})
 }
+
+// HasDanQiuOSBinding is for profile display only; authorization uses checked queries.
+func HasDanQiuOSBinding(userID int) bool {
+	var count int64
+	return DB.Model(&ExternalIdentityClaim{}).Where("provider = ? AND user_id = ?", "danqiuos", userID).Count(&count).Error == nil && count > 0
+}
