@@ -22,6 +22,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import { Input } from '@/components/ui/input'
+import { usePortalContainer } from '@/components/ui/portal-container'
 import { cn } from '@/lib/utils'
 
 export type ComboboxInputOption = {
@@ -66,6 +67,7 @@ export function ComboboxInput({
   'aria-invalid': ariaInvalid,
 }: ComboboxInputProps) {
   const { t } = useTranslation()
+  const portalContainer = usePortalContainer()
   const listId = React.useId()
   const [open, setOpen] = React.useState(false)
   const [searchValue, setSearchValue] = React.useState('')
@@ -134,8 +136,10 @@ export function ComboboxInput({
     }
     const input = inputRef.current
     if (!input) return
-    const container =
-      input.closest<HTMLElement>('[role="dialog"]') ?? document.body
+    const container = portalContainer
+      ? portalContainer.current
+      : (input.closest<HTMLElement>('[role="dialog"]') ?? document.body)
+    if (!container) throw new Error('Combobox portal container is not mounted')
     const measure = () => {
       const rect = input.getBoundingClientRect()
       setDropdown({
@@ -152,7 +156,7 @@ export function ComboboxInput({
       window.removeEventListener('scroll', measure, true)
       window.removeEventListener('resize', measure)
     }
-  }, [open])
+  }, [open, portalContainer])
 
   const handleSelect = (selectedValue: string) => {
     onValueChange(selectedValue)

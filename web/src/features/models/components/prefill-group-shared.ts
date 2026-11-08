@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import type { StatusBadgeProps } from '@/components/status-badge'
 
-import { type PrefillGroup, type PrefillGroupFormValues } from '../types'
+import type { PrefillGroup, PrefillGroupFormValues } from '../types'
 
 export type PrefillGroupType = PrefillGroup['type']
 
@@ -99,11 +99,15 @@ export function parseEndpointKeys(items: PrefillGroup['items']): string[] {
     if (Array.isArray(parsed)) {
       return parsed
         .map((item) =>
-          typeof item === 'string'
-            ? item
-            : typeof item?.name === 'string'
-              ? item.name
-              : ''
+          (() => {
+            if (typeof item === 'string') {
+              return item
+            }
+            if (typeof item?.name === 'string') {
+              return item.name
+            }
+            return ''
+          })()
         )
         .filter(Boolean)
     }

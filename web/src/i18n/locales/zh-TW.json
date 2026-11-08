@@ -6788,5 +6788,6 @@
     "operations": "个操作",
     "owner": "负责人",
     "Have a DanToken account? Sign in first and link DanQiuOS in Account Security to keep your balance and API keys.": "已有 DanToken 帳戶？請先登入，並在帳戶安全中綁定 DanQiuOS，以保留原餘額和 API 金鑰。"
-  }
+  },
+  "Ask an administrator to set a cross-origin HTTP(S) chat URL without a username or password.": "請管理員將聊天預設設為與本站不同源的 HTTP(S) 網址，且不得包含使用者名稱或密碼。"
 }

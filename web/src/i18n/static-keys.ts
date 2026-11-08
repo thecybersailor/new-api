@@ -912,4 +912,5 @@ export const STATIC_I18N_KEYS = [
   'evidence',
   'operations',
   'owner',
+  'Ask an administrator to set a cross-origin HTTP(S) chat URL without a username or password.',
 ] as const

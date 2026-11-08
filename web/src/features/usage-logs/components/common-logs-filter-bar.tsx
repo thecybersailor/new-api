@@ -20,12 +20,13 @@ import { useQueryClient, useIsFetching, useQuery } from '@tanstack/react-query'
 import { useNavigate, getRouteApi } from '@tanstack/react-router'
 import type { Table } from '@tanstack/react-table'
 import { Eye, EyeOff } from 'lucide-react'
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
+import { PortalContainerContext } from '@/components/ui/portal-container'
 import {
   Select,
   SelectContent,
@@ -343,19 +344,24 @@ export function CommonLogsFilterBar<TData>(
       />
     </LogsFilterField>
   )
+  const groupPortalRef = useRef<HTMLDivElement>(null)
   const groupFilter = (
-    <LogsFilterField className={sensitiveInputClass}>
-      <Combobox
-        options={groupOptions}
-        allowCustomValue
-        aria-label={t('Group')}
-        emptyText={t('No group found.')}
-        placeholder={t('Group')}
-        className='h-8 min-w-0 text-sm leading-5'
-        value={filters.group || ''}
-        onValueChange={(value) => handleChange('group', value ?? '')}
-        onKeyDown={handleKeyDown}
-      />
+    <LogsFilterField>
+      <div ref={groupPortalRef} className={sensitiveInputClass}>
+        <PortalContainerContext value={groupPortalRef}>
+          <Combobox
+            options={groupOptions}
+            allowCustomValue
+            aria-label={t('Group')}
+            emptyText={t('No group found.')}
+            placeholder={t('Group')}
+            className='h-8 min-w-0 text-sm leading-5'
+            value={filters.group || ''}
+            onValueChange={(value) => handleChange('group', value ?? '')}
+            onKeyDown={handleKeyDown}
+          />
+        </PortalContainerContext>
+      </div>
     </LogsFilterField>
   )
   const typeFilter = (

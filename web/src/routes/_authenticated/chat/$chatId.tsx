@@ -29,6 +29,7 @@ import {
   chatLinkRequiresApiKey,
   resolveChatUrl,
 } from '@/features/chat/lib/chat-links'
+import { chatFrameSandbox } from '@/features/chat/lib/embedded-chat-policy'
 
 export const Route = createFileRoute('/_authenticated/chat/$chatId')({
   loader: async ({ params }) => {
@@ -51,6 +52,23 @@ function ChatRouteComponent() {
 
   const isWebLink = preset?.type === 'web'
 
+  const validFrameTarget = useMemo(() => {
+    if (!preset || !isWebLink) return false
+    try {
+      chatFrameSandbox(
+        resolveChatUrl({
+          template: preset.url,
+          apiKey: 'origin-check',
+          serverAddress,
+        }),
+        window.location.origin
+      )
+      return true
+    } catch {
+      return false
+    }
+  }, [preset, isWebLink, serverAddress])
+
   const requiresActiveKey = useMemo(() => {
     if (!preset || !isWebLink) return false
     return chatLinkRequiresApiKey(preset.url ?? '')
@@ -61,7 +79,7 @@ function ChatRouteComponent() {
     isPending,
     isError,
     error,
-  } = useActiveChatKey(Boolean(preset && requiresActiveKey))
+  } = useActiveChatKey(Boolean(preset && requiresActiveKey && validFrameTarget))
 
   const iframeSrc = useMemo(() => {
     if (!preset || !isWebLink) return ''
@@ -112,6 +130,19 @@ function ChatRouteComponent() {
     )
   }
 
+  if (!validFrameTarget) {
+    return (
+      <Alert variant='destructive'>
+        <AlertTitle>{t('Unable to open chat')}</AlertTitle>
+        <AlertDescription>
+          {t(
+            'Ask an administrator to set a cross-origin HTTP(S) chat URL without a username or password.'
+          )}
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
   if (requiresActiveKey && isPending) {
     return (
       <div className='flex h-full flex-col items-center justify-center gap-4'>
@@ -153,8 +184,25 @@ function ChatRouteComponent() {
     )
   }
 
+  let frameSandbox: string
+  try {
+    frameSandbox = chatFrameSandbox(iframeSrc, window.location.origin)
+  } catch {
+    return (
+      <Alert variant='destructive'>
+        <AlertTitle>{t('Unable to open chat')}</AlertTitle>
+        <AlertDescription>
+          {t(
+            'Ask an administrator to set a cross-origin HTTP(S) chat URL without a username or password.'
+          )}
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
   return (
     <iframe
+      sandbox={frameSandbox}
       src={iframeSrc}
       key={iframeSrc}
       className='h-full w-full border-0'

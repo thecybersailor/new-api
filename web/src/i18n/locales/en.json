@@ -6788,5 +6788,6 @@
     "operations": "operations",
     "owner": "owner",
     "Have a DanToken account? Sign in first and link DanQiuOS in Account Security to keep your balance and API keys.": "Have a DanToken account? Sign in first and link DanQiuOS in Account Security to keep your balance and API keys."
-  }
+  },
+  "Ask an administrator to set a cross-origin HTTP(S) chat URL without a username or password.": "Ask an administrator to set a cross-origin HTTP(S) chat URL without a username or password."
 }
