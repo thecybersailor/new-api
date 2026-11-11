@@ -23,10 +23,12 @@ func TestGetOpenAIVideoRouteRendersJimengTask(t *testing.T) {
 	previousMasterNode := common.IsMasterNode
 	previousRedisEnabled := common.RedisEnabled
 	common.SQLitePath = t.TempDir() + "/router-video.db"
-	common.IsMasterNode = false
+	// An empty fixture must be migrated before it can act as a serving node.
+	common.IsMasterNode = true
 	common.RedisEnabled = false
 	t.Setenv("SQL_DSN", "")
 	require.NoError(t, model.InitDB())
+	common.IsMasterNode = false
 	database := model.DB
 	require.NoError(t, database.AutoMigrate(&model.User{}, &model.Token{}, &model.Channel{}, &model.Task{}))
 	t.Cleanup(func() {

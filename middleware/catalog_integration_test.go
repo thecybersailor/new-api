@@ -101,6 +101,31 @@ func TestCatalogCredentialRecoveryAndIsolation(t *testing.T) {
 		assert.Equal(t, 403, response.Code, header)
 		assert.False(t, fallback, header)
 	}
+
+	// A normal API token has no integration binding and retains the ordinary
+	// relay path with either catalog flag value; catalog control APIs stay denied.
+	ordinary := model.Token{UserId: user.Id, Key: "fixtureordinarytoken", Status: common.TokenStatusEnabled, ExpiredTime: -1, Group: "default"}
+	require.NoError(t, db.Create(&ordinary).Error)
+	router.GET("/v1/catalog", func(c *gin.Context) { fallback = true; c.Status(200) })
+	for _, enabled := range []string{"false", "true"} {
+		t.Setenv("DANTOKEN_CATALOG_ENABLED", enabled)
+		for _, path := range []string{"/v1/chat/completions", "/v1/messages", "/v1/models/test"} {
+			fallback = false
+			request = httptest.NewRequest(http.MethodPost, path, nil)
+			request.Header.Set("Authorization", "Bearer "+ordinary.Key)
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			assert.Equal(t, http.StatusOK, response.Code, path)
+			assert.True(t, fallback, path)
+		}
+		fallback = false
+		request = httptest.NewRequest(http.MethodGet, "/v1/catalog", nil)
+		request.Header.Set("Authorization", "Bearer "+ordinary.Key)
+		response = httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+		assert.False(t, fallback)
+	}
 }
 
 func TestCatalogMaintenanceScopePolicyAndRotation(t *testing.T) {

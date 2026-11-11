@@ -100,12 +100,14 @@ func setupRelayRouterTestDB(t *testing.T) {
 	originalLogDatabaseType := common.LogDatabaseType()
 	originalSQLDSN, hadSQLDSN := os.LookupEnv("SQL_DSN")
 
-	common.IsMasterNode = false
+	// Bootstrap the empty fixture through master migration before testing relay behavior.
+	common.IsMasterNode = true
 	common.RedisEnabled = false
 	common.SQLitePath = fmt.Sprintf("file:%s?mode=memory&cache=shared", strings.ReplaceAll(t.Name(), "/", "_"))
 	common.SetDatabaseTypes(common.DatabaseTypeSQLite, common.DatabaseTypeSQLite)
 	require.NoError(t, os.Setenv("SQL_DSN", "local"))
 	require.NoError(t, model.InitDB())
+	common.IsMasterNode = false
 	model.LOG_DB = model.DB
 	require.NoError(t, model.DB.AutoMigrate(&model.User{}, &model.Token{}, &model.Ability{}))
 	require.NoError(t, model.DB.AutoMigrate(model.CatalogIntegrationModels()...))

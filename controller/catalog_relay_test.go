@@ -41,9 +41,11 @@ func catalogRelayFixture(t *testing.T, path string, operation c.Operation, upstr
 	oldRedis, oldConsume, oldBatch := common.RedisEnabled, common.LogConsumeEnabled, common.BatchUpdateEnabled
 	oldPath, oldMaster := common.SQLitePath, common.IsMasterNode
 	common.SQLitePath = filepath.Join(t.TempDir(), "relay.db")
-	common.IsMasterNode = false
+	// Bootstrap the empty fixture; slave startup correctly rejects missing catalog tables.
+	common.IsMasterNode = true
 	t.Setenv("SQL_DSN", "local")
 	require.NoError(t, model.InitDB())
+	common.IsMasterNode = false
 	db := model.DB
 	model.LOG_DB = db
 	t.Cleanup(func() { common.SQLitePath, common.IsMasterNode = oldPath, oldMaster })

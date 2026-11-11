@@ -52,7 +52,8 @@ func modelManagementDB(t *testing.T, kind, dsn string) *gorm.DB {
 		{ratio_setting.AudioRatio2JSONString(), ratio_setting.UpdateAudioRatioByJSONString},
 		{ratio_setting.AudioCompletionRatio2JSONString(), ratio_setting.UpdateAudioCompletionRatioByJSONString},
 	}
-	common.IsMasterNode = false
+	// Bootstrap the isolated fixture before testing management behavior as a serving node.
+	common.IsMasterNode = true
 	common.RedisEnabled, common.MemoryCacheEnabled = false, false
 	common.OptionMap = map[string]string{}
 	if kind == "sqlite" {
@@ -62,6 +63,7 @@ func modelManagementDB(t *testing.T, kind, dsn string) *gorm.DB {
 	t.Setenv("SQL_DSN", isolatedDSN)
 	t.Setenv("LOG_SQL_DSN", "")
 	require.NoError(t, model.InitDB())
+	common.IsMasterNode = false
 	database = model.DB
 	model.LOG_DB = database
 	require.NoError(t, database.AutoMigrate(&model.Model{}, &model.Vendor{}, &model.Channel{}, &model.Ability{}, &model.Option{}, &model.User{}, &model.AuditLog{}))

@@ -80,7 +80,8 @@ func initModelListColumnNames(t *testing.T) {
 		}
 	}()
 
-	common.IsMasterNode = false
+	// Column initialization now also verifies catalog schema, so migrate this empty fixture.
+	common.IsMasterNode = true
 	common.SQLitePath = fmt.Sprintf("file:%s_init?mode=memory&cache=shared", strings.ReplaceAll(t.Name(), "/", "_"))
 	common.SetDatabaseTypes(common.DatabaseTypeSQLite, common.DatabaseTypeSQLite)
 	require.NoError(t, os.Setenv("SQL_DSN", "local"))

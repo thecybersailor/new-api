@@ -27,9 +27,11 @@ func TestMultiKeyEnableRestoresOnlyExhaustedChannels(t *testing.T) {
 	})
 	t.Setenv("SQL_DSN", os.Getenv("TEST_CHANNEL_SQL_DSN"))
 	t.Setenv("LOG_SQL_DSN", "")
-	common.IsMasterNode, common.MemoryCacheEnabled, common.RedisEnabled = false, false, false
+	// Bootstrap the isolated fixture before testing channel behavior as a serving node.
+	common.IsMasterNode, common.MemoryCacheEnabled, common.RedisEnabled = true, false, false
 	common.SQLitePath = filepath.Join(t.TempDir(), "channel.db")
 	require.NoError(t, model.InitDB())
+	common.IsMasterNode = false
 	database := model.DB
 	sqlDB, err := database.DB()
 	require.NoError(t, err)

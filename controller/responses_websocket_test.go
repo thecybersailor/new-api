@@ -57,9 +57,11 @@ func setupResponsesWSRequestTest(t *testing.T) (*model.User, *model.Token) {
 	setting.ModelRequestRateLimitMutex.Unlock()
 	t.Setenv("SQL_DSN", os.Getenv("TEST_RESPONSES_SQL_DSN"))
 	t.Setenv("LOG_SQL_DSN", os.Getenv("TEST_RESPONSES_LOG_SQL_DSN"))
-	common.IsMasterNode, common.MemoryCacheEnabled, common.RedisEnabled = false, false, false
+	// Bootstrap the isolated fixture before testing request behavior as a serving node.
+	common.IsMasterNode, common.MemoryCacheEnabled, common.RedisEnabled = true, false, false
 	common.SQLitePath = filepath.Join(t.TempDir(), "responses.db")
 	require.NoError(t, model.InitDB())
+	common.IsMasterNode = false
 	db := model.DB
 	sqlDB, err := db.DB()
 	require.NoError(t, err)

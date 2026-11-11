@@ -57,8 +57,10 @@ func catalogProcessOpen(t *testing.T, cfg catalogProcessConfig) *gorm.DB {
 	oldDB, oldLog, oldPath, oldMaster, oldType := model.DB, model.LOG_DB, common.SQLitePath, common.IsMasterNode, common.MainDatabaseType()
 	oldRedis, oldConsume, oldBatch := common.RedisEnabled, common.LogConsumeEnabled, common.BatchUpdateEnabled
 	common.SQLitePath = cfg.SQLite
-	common.IsMasterNode = false
+	// The parent bootstraps the isolated database; child servers require its migrated schema.
+	common.IsMasterNode = os.Getenv("CATALOG_PROCESS_CHILD_CONFIG") == ""
 	require.NoError(t, model.InitDB())
+	common.IsMasterNode = false
 	db := model.DB
 	model.LOG_DB = db
 	db.Logger = logger.Default.LogMode(logger.Silent)
